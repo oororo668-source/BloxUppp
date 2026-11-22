@@ -341,6 +341,10 @@ function connectSocket() {
     socket.on('connect', () => console.log('Socket connected'));
     socket.on('connect_error', (err) => { showToast('Ошибка подключения: ' + err.message, 'error'); });
 
+    socket.on('errorMsg', (msg) => {
+        showToast(msg, 'error');
+    });
+
     socket.on('chatList', list => {
         chatsCache = {};
         list.forEach(c => chatsCache[c.id] = c);
@@ -485,7 +489,8 @@ $('spinBtn').addEventListener('click', () => {
     const winAngle = (pct / 100) * 360;
     const isWin = Math.random() < (pct / 1.5 / 100);
     isSpinning = true; $('spinBtn').disabled = true; $('resultDisplay').textContent = 'Крутится...';
-    const duration = 4000; const startTime = performance.now(); const startRotation = pointerRotation;
+    const duration = fastMode ? 800 : 4000;
+    const startTime = performance.now(); const startRotation = pointerRotation;
     const targetAngle = isWin ? Math.random() * (winAngle - 10) : winAngle + 10 + Math.random() * (360 - winAngle - 20);
     const delta = (targetAngle - (startRotation % 360) + 360) % 360; const totalRotation = 8 * 360 + delta;
     function animate(now) {
@@ -502,6 +507,7 @@ $('spinBtn').addEventListener('click', () => {
         }
         $('balanceDisplay').textContent = balance;
         if (currentUser.role !== 'admin') socket.emit('saveStats', { won: actuallyWon ? Math.round(bet * mult) : 0, lost: actuallyWon ? 0 : bet, spins: 1 });
+        socket.emit('updateBalance', { newBalance: balance });
         isSpinning = false; $('spinBtn').disabled = false;
     }
     requestAnimationFrame(animate);
