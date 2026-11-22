@@ -23,12 +23,16 @@ const db = createClient({
 });
 
 async function initDb() {
-  await db.batch([
-    `CREATE TABLE IF NOT EXISTS users (nick TEXT PRIMARY KEY, password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', balance INTEGER NOT NULL DEFAULT 0, telegram_id TEXT, created_at INTEGER NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, nick TEXT NOT NULL, amount INTEGER NOT NULL, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT NOT NULL, sender TEXT NOT NULL, sender_role TEXT NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS stats (nick TEXT PRIMARY KEY, won INTEGER NOT NULL DEFAULT 0, lost INTEGER NOT NULL DEFAULT 0, spins INTEGER NOT NULL DEFAULT 0)`,
-  ]);
+  try {
+    await db.execute(`CREATE TABLE IF NOT EXISTS users (nick TEXT PRIMARY KEY, password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', balance INTEGER NOT NULL DEFAULT 0, telegram_id TEXT, created_at INTEGER NOT NULL)`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, nick TEXT NOT NULL, amount INTEGER NOT NULL, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT NOT NULL, sender TEXT NOT NULL, sender_role TEXT NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS stats (nick TEXT PRIMARY KEY, won INTEGER NOT NULL DEFAULT 0, lost INTEGER NOT NULL DEFAULT 0, spins INTEGER NOT NULL DEFAULT 0)`);
+    console.log('Tables created or already exist');
+  } catch (e) {
+    console.error('Error creating tables:', e);
+  }
+
   const adm = await db.execute({ sql: 'SELECT nick FROM users WHERE nick=?', args: [ADMIN_NICK] });
   if (adm.rows.length === 0) {
     await db.execute({
@@ -77,32 +81,6 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Неверный ник или пароль' });
     if (telegram_id && !user.telegram_id) {
       await db.execute({ sql: 'UPDATE users SET telegram_id=? WHERE nick=?', args: [String(telegram_id), nick] });
-    }
-    const token = jwt.sign({ nick: user.nick, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ token, nick: user.nick, role: user.role, balance: user.balance });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/telegram-auth', async (req, res) => {
-  try {
-    const { telegram_id, first_name, username } = req.body || {};
-    if (!telegram_id) return res.status(400).json({ error: 'No telegram id' });
-    const nick = username || ('tg_' + telegram_id);
-    let r = await db.execute({ sql: 'SELECT * FROM users WHERE telegram_id=?', args: [String(telegram_id)] });
-    let user = r.rows[0];
-    if (!user) {
-      r = await db.execute({ sql: 'SELECT * FROM users WHERE nick=?', args: [nick] });
-      user = r.rows[0];
-      if (user) {
-        await db.execute({ sql: 'UPDATE users SET telegram_id=? WHERE nick=?', args: [String(telegram_id), nick] });
-      } else {
-        await db.execute({
-          sql: 'INSERT INTO users (nick,password,role,balance,telegram_id,created_at) VALUES (?,?,?,?,?,?)',
-          args: [nick, bcrypt.hashSync(String(telegram_id) + '_tg', 10), 'member', 0, String(telegram_id), Date.now()],
-        });
-        r = await db.execute({ sql: 'SELECT * FROM users WHERE nick=?', args: [nick] });
-        user = r.rows[0];
-      }
     }
     const token = jwt.sign({ nick: user.nick, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, nick: user.nick, role: user.role, balance: user.balance });
@@ -160,7 +138,29 @@ io.on('connection', (socket) => {
     socket.emit('history', { chatId, messages: r.rows });
   });
 
+  socket.on('updateBalance', async ({ newBalance }) => {
+    try {
+      await db.execute({
+        sql: 'UPDATE users SET balance=? WHERE nick=?',
+        args: [newBalance, nick],
+      });
+    } catch (e) { console.error('updateBalance', e); }
+  });
+
   socket.on('createChat', async ({ amount, type, firstMessage }, ack) => {
+    // Если вывод — сразу проверяем и списываем деньги
+    if (type === 'withdraw') {
+      const userRes = await db.execute({ sql: 'SELECT balance FROM users WHERE nick=?', args: [nick] });
+      const currentBalance = userRes.rows[0]?.balance || 0;
+      if (currentBalance < amount) {
+        return socket.emit('errorMsg', 'Недостаточно средств для вывода');
+      }
+      await db.execute({
+        sql: 'UPDATE users SET balance = balance - ? WHERE nick=?',
+        args: [amount, nick],
+      });
+    }
+
     const id = 'chat_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     await db.execute({
       sql: 'INSERT INTO chats (id,nick,amount,type,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?)',
@@ -170,8 +170,6 @@ io.on('connection', (socket) => {
     await sendMessage(id, nick, 'player', firstMessage);
     const sysText = type === 'withdraw'
       ? 'Скиньте геймпасс на сумму вывода — админ оплатит в течение 7 дней.'
-      : type === 'task'
-      ? 'Скинь результат — админ проверит и начислит.'
       : 'Купи геймпасс и напиши "Оплатил". Админ проверит и начислит.';
     await sendMessage(id, 'admin', 'system', sysText);
     if (ack) ack({ chatId: id });
@@ -193,15 +191,21 @@ io.on('connection', (socket) => {
     const chat = r.rows[0];
     if (!chat || chat.status !== 'pending') return;
     if (action === 'credit') {
+      // Если это не вывод — начисляем баланс
       if (chat.type !== 'withdraw') {
         await db.execute({ sql: 'UPDATE users SET balance=balance+? WHERE nick=?', args: [chat.amount, chat.nick] });
       }
       await db.execute({ sql: 'UPDATE chats SET status=? WHERE id=?', args: ['accepted', chatId] });
       await sendMessage(chatId, 'admin', 'success', `✅ Начислено ${chat.amount} R$`);
     } else if (action === 'payout') {
+      // При оплате вывода ничего не списываем (уже списали при создании заявки)
       await db.execute({ sql: 'UPDATE chats SET status=? WHERE id=?', args: ['paid', chatId] });
       await sendMessage(chatId, 'admin', 'success', `✅ Вывод ${chat.amount} R$ оплачен`);
     } else if (action === 'reject') {
+      // Если отклонили вывод — возвращаем деньги обратно
+      if (chat.type === 'withdraw') {
+        await db.execute({ sql: 'UPDATE users SET balance=balance+? WHERE nick=?', args: [chat.amount, chat.nick] });
+      }
       await db.execute({ sql: 'UPDATE chats SET status=? WHERE id=?', args: ['rejected', chatId] });
       await sendMessage(chatId, 'admin', 'danger', '❌ Заявка отклонена');
     }
