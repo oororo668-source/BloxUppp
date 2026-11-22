@@ -24,11 +24,19 @@ const db = createClient({
 
 async function initDb() {
   try {
-    await db.execute(`CREATE TABLE IF NOT EXISTS users (nick TEXT PRIMARY KEY, password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', balance INTEGER NOT NULL DEFAULT 0, telegram_id TEXT, created_at INTEGER NOT NULL)`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS users (nick TEXT PRIMARY KEY, password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', balance INTEGER NOT NULL DEFAULT 0, telegram_id TEXT, created_at INTEGER NOT NULL, is_banned INTEGER NOT NULL DEFAULT 0, is_removed_from_leaderboard INTEGER NOT NULL DEFAULT 0)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, nick TEXT NOT NULL, amount INTEGER NOT NULL, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT NOT NULL, sender TEXT NOT NULL, sender_role TEXT NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS stats (nick TEXT PRIMARY KEY, won INTEGER NOT NULL DEFAULT 0, lost INTEGER NOT NULL DEFAULT 0, spins INTEGER NOT NULL DEFAULT 0)`);
-    console.log('Tables created or already exist');
+    await db.execute(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+    
+    // Добавляем колонки, если таблица была создана раньше
+    try { await db.execute(`ALTER TABLE users ADD COLUMN is_banned INTEGER NOT NULL DEFAULT 0`); } catch(e){}
+    try { await db.execute(`ALTER TABLE users ADD COLUMN is_removed_from_leaderboard INTEGER NOT NULL DEFAULT 0`); } catch(e){}
+    
+    await db.execute(`INSERT OR IGNORE INTO settings (key, value) VALUES ('abuse_all_win', 'false'), ('ban_all', 'false')`);
+    
+    console.log('Tables initialized');
   } catch (e) {
     console.error('Error creating tables:', e);
   }
@@ -60,11 +68,17 @@ app.post('/api/register', async (req, res) => {
   try {
     const { nick, password, telegram_id } = req.body || {};
     if (!nick || !password) return res.status(400).json({ error: 'Заполни ник и пароль' });
+    
+    const settings = await db.execute('SELECT * FROM settings');
+    const isBanAll = settings.rows.find(s => s.key === 'ban_all')?.value === 'true';
+    if (isBanAll) return res.status(403).json({ error: 'Регистрация временно закрыта (Бан всех)' });
+
     if (nick.length < 3) return res.status(400).json({ error: 'Ник от 3 символов' });
     const exist = await db.execute({ sql: 'SELECT nick FROM users WHERE nick=?', args: [nick] });
     if (exist.rows.length) return res.status(400).json({ error: 'Ник занят' });
+    
     await db.execute({
-      sql: 'INSERT INTO users (nick,password,role,balance,telegram_id,created_at) VALUES (?,?,?,?,?,?)',
+      sql: 'INSERT INTO users (nick,password,role,balance,telegram_id,created_at,is_banned,is_removed_from_leaderboard) VALUES (?,?,?,?,?,?,0,0)',
       args: [nick, bcrypt.hashSync(password, 10), 'member', 0, telegram_id || null, Date.now()],
     });
     const token = jwt.sign({ nick, role: 'member' }, JWT_SECRET, { expiresIn: '30d' });
@@ -79,9 +93,17 @@ app.post('/api/login', async (req, res) => {
     const user = r.rows[0];
     if (!user || !bcrypt.compareSync(password, user.password))
       return res.status(401).json({ error: 'Неверный ник или пароль' });
+    
+    if (user.is_banned) return res.status(403).json({ error: 'Вы забанены' });
+    
     if (telegram_id && !user.telegram_id) {
       await db.execute({ sql: 'UPDATE users SET telegram_id=? WHERE nick=?', args: [String(telegram_id), nick] });
     }
+    
+    const settings = await db.execute('SELECT * FROM settings');
+    const isBanAll = settings.rows.find(s => s.key === 'ban_all')?.value === 'true';
+    if (isBanAll && user.role !== 'admin') return res.status(403).json({ error: 'Сервер закрыт для входа (Бан всех)' });
+
     const token = jwt.sign({ nick: user.nick, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, nick: user.nick, role: user.role, balance: user.balance });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -98,7 +120,12 @@ app.get('/api/me', async (req, res) => {
 });
 
 app.get('/api/leaderboard', async (req, res) => {
-  const r = await db.execute({ sql: 'SELECT nick,won,spins FROM stats WHERE won>0 ORDER BY won DESC LIMIT 20' });
+  const r = await db.execute({ 
+    sql: `SELECT s.nick, s.won, s.spins FROM stats s 
+          JOIN users u ON u.nick = s.nick 
+          WHERE s.won > 0 AND u.is_removed_from_leaderboard = 0 
+          ORDER BY s.won DESC LIMIT 20` 
+  });
   res.json(r.rows);
 });
 
@@ -140,25 +167,16 @@ io.on('connection', (socket) => {
 
   socket.on('updateBalance', async ({ newBalance }) => {
     try {
-      await db.execute({
-        sql: 'UPDATE users SET balance=? WHERE nick=?',
-        args: [newBalance, nick],
-      });
+      await db.execute({ sql: 'UPDATE users SET balance=? WHERE nick=?', args: [newBalance, nick] });
     } catch (e) { console.error('updateBalance', e); }
   });
 
   socket.on('createChat', async ({ amount, type, firstMessage }, ack) => {
-    // Если вывод — сразу проверяем и списываем деньги
     if (type === 'withdraw') {
       const userRes = await db.execute({ sql: 'SELECT balance FROM users WHERE nick=?', args: [nick] });
       const currentBalance = userRes.rows[0]?.balance || 0;
-      if (currentBalance < amount) {
-        return socket.emit('errorMsg', 'Недостаточно средств для вывода');
-      }
-      await db.execute({
-        sql: 'UPDATE users SET balance = balance - ? WHERE nick=?',
-        args: [amount, nick],
-      });
+      if (currentBalance < amount) return socket.emit('errorMsg', 'Недостаточно средств для вывода');
+      await db.execute({ sql: 'UPDATE users SET balance = balance - ? WHERE nick=?', args: [amount, nick] });
     }
 
     const id = 'chat_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -180,9 +198,7 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async ({ chatId, text }) => {
     if (!text?.trim()) return;
     await sendMessage(chatId, nick, role === 'admin' ? 'admin' : 'player', text.trim());
-    if (role !== 'admin') {
-      notifyAdmin(`💬 <b>Сообщение</b>\nОт: ${nick}\n\n${text.trim()}`);
-    }
+    if (role !== 'admin') notifyAdmin(`💬 <b>Сообщение</b>\nОт: ${nick}\n\n${text.trim()}`);
   });
 
   socket.on('adminAction', async ({ chatId, action }) => {
@@ -191,18 +207,15 @@ io.on('connection', (socket) => {
     const chat = r.rows[0];
     if (!chat || chat.status !== 'pending') return;
     if (action === 'credit') {
-      // Если это не вывод — начисляем баланс
       if (chat.type !== 'withdraw') {
         await db.execute({ sql: 'UPDATE users SET balance=balance+? WHERE nick=?', args: [chat.amount, chat.nick] });
       }
       await db.execute({ sql: 'UPDATE chats SET status=? WHERE id=?', args: ['accepted', chatId] });
       await sendMessage(chatId, 'admin', 'success', `✅ Начислено ${chat.amount} R$`);
     } else if (action === 'payout') {
-      // При оплате вывода ничего не списываем (уже списали при создании заявки)
       await db.execute({ sql: 'UPDATE chats SET status=? WHERE id=?', args: ['paid', chatId] });
       await sendMessage(chatId, 'admin', 'success', `✅ Вывод ${chat.amount} R$ оплачен`);
     } else if (action === 'reject') {
-      // Если отклонили вывод — возвращаем деньги обратно
       if (chat.type === 'withdraw') {
         await db.execute({ sql: 'UPDATE users SET balance=balance+? WHERE nick=?', args: [chat.amount, chat.nick] });
       }
@@ -217,6 +230,51 @@ io.on('connection', (socket) => {
       sql: `INSERT INTO stats (nick,won,lost,spins) VALUES (?,?,?,?) ON CONFLICT(nick) DO UPDATE SET won=won+?, lost=lost+?, spins=spins+?`,
       args: [nick, won, lost, spins, won, lost, spins],
     });
+  });
+
+  // НОВЫЕ СОБЫТИЯ ДЛЯ АДМИНКИ
+  socket.on('getAdminData', async (ack) => {
+    if (role !== 'admin') return;
+    const users = await db.execute('SELECT nick, balance, is_banned FROM users WHERE role != "admin"');
+    const settings = await db.execute('SELECT * FROM settings');
+    const sObj = {};
+    settings.rows.forEach(r => sObj[r.key] = r.value);
+    if (ack) ack({ users: users.rows, settings: sObj });
+  });
+
+  socket.on('adminCredit', async ({ targetNick, amount }) => {
+    if (role !== 'admin') return;
+    await db.execute({ sql: 'UPDATE users SET balance = balance + ? WHERE nick=?', args: [amount, targetNick] });
+  });
+
+  socket.on('adminDebit', async ({ targetNick, amount }) => {
+    if (role !== 'admin') return;
+    await db.execute({ sql: 'UPDATE users SET balance = balance - ? WHERE nick=?', args: [amount, targetNick] });
+  });
+
+  socket.on('adminBan', async ({ targetNick, ban }) => {
+    if (role !== 'admin') return;
+    await db.execute({ sql: 'UPDATE users SET is_banned = ? WHERE nick=?', args: [ban ? 1 : 0, targetNick] });
+  });
+
+  socket.on('adminRemoveLeaderboard', async ({ targetNick, remove }) => {
+    if (role !== 'admin') return;
+    await db.execute({ sql: 'UPDATE users SET is_removed_from_leaderboard = ? WHERE nick=?', args: [remove ? 1 : 0, targetNick] });
+  });
+
+  socket.on('adminUpdateSettings', async ({ key, value }) => {
+    if (role !== 'admin') return;
+    await db.execute({ sql: 'UPDATE settings SET value=? WHERE key=?', args: [value, key] });
+    if (key === 'abuse_all_win' || key === 'ban_all') {
+      io.emit('settingsUpdated', { key, value });
+    }
+  });
+
+  socket.on('getGameSettings', async (ack) => {
+    const settings = await db.execute('SELECT * FROM settings');
+    const sObj = {};
+    settings.rows.forEach(r => sObj[r.key] = r.value);
+    if (ack) ack(sObj);
   });
 });
 
