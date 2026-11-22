@@ -8,536 +8,125 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-:root {
-    --bg-0: #0a1020;
-    --bg-1: #101830;
-    --bg-2: #16223e;
-    --bg-3: #1e2c4e;
-    --border: #2a3a5e;
-    --border-light: #3a4e78;
-    --text: #ffffff;
-    --text-dim: #c8d4e8;
-    --muted: #7a8aaa;
-    --blue: #3b82f6;
-    --blue-bright: #60a5fa;
-    --blue-deep: #1e40af;
-    --green: #22c55e;
-    --red: #ef4444;
-    --gold: #fbbf24;
-    --silver: #cbd5e1;
-    --bronze: #cd7f32;
-    --accent: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    --accent-glow: rgba(59,130,246,0.4);
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-html, body { overscroll-behavior: none; touch-action: manipulation; }
-
-body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: var(--bg-0); color: var(--text);
-    padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));
-    max-width: 520px; margin: 0 auto; min-height: 100vh;
-    overflow-x: hidden; -webkit-user-select: none; user-select: none;
-    position: relative;
-}
-body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background:
-        radial-gradient(circle at 20% 0%, rgba(59,130,246,0.12), transparent 50%),
-        radial-gradient(circle at 80% 100%, rgba(139,92,246,0.1), transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(96,165,250,0.04), transparent 70%);
-    animation: bgShift 20s ease infinite;
-}
-@keyframes bgShift {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.85; transform: scale(1.05); }
-}
-
+:root { --bg-0: #0a1020; --bg-1: #101830; --bg-2: #16223e; --bg-3: #1e2c4e; --border: #2a3a5e; --border-light: #3a4e78; --text: #ffffff; --text-dim: #c8d4e8; --muted: #7a8aaa; --blue: #3b82f6; --blue-bright: #60a5fa; --green: #22c55e; --red: #ef4444; --gold: #fbbf24; --accent: linear-gradient(135deg, #3b82f6, #8b5cf6); --accent-glow: rgba(59,130,246,0.4); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1); }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg-0); color: var(--text); padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom)); max-width: 520px; margin: 0 auto; min-height: 100vh; overflow-x: hidden; -webkit-user-select: none; user-select: none; }
+body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(circle at 20% 0%, rgba(59,130,246,0.12), transparent 50%), radial-gradient(circle at 80% 100%, rgba(139,92,246,0.1), transparent 50%); }
 button, input, .tab, .quick-btn { transition: all 0.25s var(--ease-smooth); }
-
-/* ===== TOASTS ===== */
-#toastContainer {
-    position: fixed; top: calc(12px + var(--safe-top)); left: 50%;
-    transform: translateX(-50%); z-index: 20000;
-    display: flex; flex-direction: column; gap: 8px;
-    pointer-events: none; max-width: calc(100vw - 24px); width: 380px;
-}
-.toast {
-    background: var(--bg-2); border: 1px solid var(--border-light);
-    padding: 12px 16px; border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 0 1px rgba(96,165,250,0.1);
-    display: flex; align-items: center; gap: 10px; font-size: 13px;
-    animation: toastIn 0.4s var(--ease-spring); pointer-events: auto;
-    backdrop-filter: blur(10px);
-}
-.toast.closing { animation: toastOut 0.3s var(--ease-smooth) forwards; }
-.toast .toast-icon { font-size: 20px; flex-shrink: 0; animation: iconPop 0.5s var(--ease-spring); }
-@keyframes iconPop { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+#toastContainer { position: fixed; top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); z-index: 20000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: calc(100vw - 24px); width: 380px; }
+.toast { background: var(--bg-2); border: 1px solid var(--border-light); padding: 12px 16px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 10px; font-size: 13px; animation: toastIn 0.4s var(--ease-spring); pointer-events: auto; backdrop-filter: blur(10px); }
 .toast.success { border-color: var(--green); color: var(--green); }
 .toast.error { border-color: var(--red); color: var(--red); }
 .toast.info { border-color: var(--blue-bright); color: var(--blue-bright); }
-.toast.warn { border-color: var(--gold); color: var(--gold); }
 @keyframes toastIn { 0% { opacity: 0; transform: translateY(-24px) scale(0.9); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes toastOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-24px) scale(0.9); } }
-
-/* ===== SAVE INDICATOR ===== */
-#saveIndicator {
-    position: fixed; bottom: calc(12px + var(--safe-bottom)); right: 12px;
-    background: rgba(34,197,94,0.15); border: 1px solid var(--green); color: var(--green);
-    font-size: 11px; padding: 6px 12px; border-radius: 20px; font-weight: 700; letter-spacing: 1px;
-    opacity: 0; transform: translateY(10px);
-    transition: all 0.4s var(--ease-spring); z-index: 19999; pointer-events: none;
-    backdrop-filter: blur(10px);
-}
-#saveIndicator.show { opacity: 1; transform: translateY(0); }
-
-/* ===== AUTH ===== */
-#authScreen {
-    position: fixed; inset: 0;
-    background: radial-gradient(ellipse at 50% 0%, #12244a 0%, var(--bg-0) 60%);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 10000; padding: 20px; overflow: hidden;
-    animation: fadeIn 0.4s ease;
-}
-@keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
-
-#authParticles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.auth-particle {
-    position: absolute; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--blue-bright); opacity: 0;
-    animation: floatParticle linear infinite;
-}
-.auth-particle.violet { background: #8b5cf6; }
-.auth-particle.white { background: #ffffff; }
-.auth-particle.small { width: 3px; height: 3px; }
-.auth-particle.big { width: 10px; height: 10px; }
-@keyframes floatParticle {
-    0% { opacity: 0; transform: translateY(0) scale(0.5); }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.6; }
-    100% { opacity: 0; transform: translateY(-120vh) scale(1); }
-}
-
-.auth-box {
-    background: var(--bg-2); padding: 34px 24px; border-radius: 20px;
-    border: 1px solid var(--border-light);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(96,165,250,0.1);
-    width: 100%; max-width: 380px; position: relative; z-index: 2;
-    animation: authIn 0.6s var(--ease-spring);
-    overflow: hidden;
-}
-.auth-box::before {
-    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(96,165,250,0.08), transparent 30%);
-    animation: authRotate 10s linear infinite; pointer-events: none;
-}
-@keyframes authRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@keyframes authIn { 0% { opacity: 0; transform: translateY(30px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-
-.auth-logo {
-    text-align: center; font-size: 32px; font-weight: 900; margin-bottom: 6px;
-    background: linear-gradient(135deg, #ffffff, #60a5fa, #8b5cf6);
-    background-size: 200% 200%;
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    letter-spacing: 3px; position: relative; z-index: 1;
-    animation: gradientShift 3s ease infinite;
-}
-@keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-
-.auth-subtitle { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 24px; letter-spacing: 2px; position: relative; z-index: 1; }
-
-.auth-tabs {
-    display: flex; gap: 6px; margin-bottom: 18px; background: var(--bg-0);
-    padding: 4px; border-radius: 12px; border: 1px solid var(--border);
-    position: relative; z-index: 1;
-}
-.auth-tabs::before {
-    content: ''; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
-    background: var(--accent); border-radius: 8px;
-    transition: transform 0.4s var(--ease-spring); z-index: 0;
-}
-.auth-tabs.register-mode::before { transform: translateX(100%); }
-.auth-tab {
-    flex: 1; padding: 10px; text-align: center; border-radius: 8px;
-    cursor: pointer; font-weight: 700; font-size: 13px; color: var(--muted);
-    position: relative; z-index: 1; transition: color 0.3s;
-}
-.auth-tab.active { color: #fff; }
-
-.auth-field { margin-bottom: 12px; position: relative; z-index: 1; }
-.auth-field label {
-    display: block; font-size: 11px; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 6px;
-}
-.auth-field input {
-    width: 100%; padding: 14px; border-radius: 10px;
-    border: 1.5px solid var(--border); background: var(--bg-0);
-    color: var(--text); font-size: 16px;
-}
-.auth-field input:focus {
-    outline: none; border-color: var(--blue);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-.auth-btn {
-    width: 100%; padding: 15px; border-radius: 12px; border: none; cursor: pointer;
-    font-weight: 800; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; color: #fff;
-    background: var(--accent); margin-top: 8px;
-    box-shadow: 0 4px 15px var(--accent-glow);
-    position: relative; overflow: hidden; z-index: 1;
-}
-.auth-btn::before {
-    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.7s;
-}
-.auth-btn:hover::before { left: 100%; }
-.auth-btn:active { transform: scale(0.97); }
-.auth-btn.loading { pointer-events: none; color: transparent; }
-.auth-btn.loading::after {
-    content: ''; position: absolute; top: 50%; left: 50%;
-    width: 20px; height: 20px; margin: -10px 0 0 -10px;
-    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
-    border-radius: 50%; animation: spin 0.8s linear infinite;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-.auth-error {
-    color: var(--red); font-size: 12px; text-align: center;
-    margin-top: 10px; min-height: 16px; opacity: 0;
-    transition: opacity 0.3s; position: relative; z-index: 1;
-}
-.auth-error.show { opacity: 1; }
-.auth-error.shake { animation: shake 0.4s ease; }
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-5px); }
-    80% { transform: translateX(5px); }
-}
-
-.auth-success-overlay {
-    position: fixed; inset: 0; z-index: 10001; background: rgba(10,16,32,0.95);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    animation: fadeIn 0.3s ease;
-}
-.auth-success-overlay .checkmark {
-    width: 80px; height: 80px; border-radius: 50%;
-    background: rgba(34,197,94,0.15); border: 2px solid var(--green);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 44px; color: var(--green);
-    animation: checkPop 0.5s var(--ease-spring);
-}
-@keyframes checkPop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-.auth-success-overlay .success-text { margin-top: 16px; font-size: 16px; font-weight: 800; color: var(--green); }
-
-/* ===== MAIN ===== */
+#authScreen { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 0%, #12244a 0%, var(--bg-0) 60%); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
+.auth-box { background: var(--bg-2); padding: 34px 24px; border-radius: 20px; border: 1px solid var(--border-light); box-shadow: 0 20px 60px rgba(0,0,0,0.7); width: 100%; max-width: 380px; }
+.auth-logo { text-align: center; font-size: 32px; font-weight: 900; margin-bottom: 6px; background: linear-gradient(135deg, #ffffff, #60a5fa, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 3px; }
+.auth-subtitle { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 24px; letter-spacing: 2px; }
+.auth-tabs { display: flex; gap: 6px; margin-bottom: 18px; background: var(--bg-0); padding: 4px; border-radius: 12px; border: 1px solid var(--border); }
+.auth-tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; color: var(--muted); transition: all 0.3s; }
+.auth-tab.active { background: var(--accent); color: #fff; }
+.auth-field { margin-bottom: 12px; }
+.auth-field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 6px; }
+.auth-field input { width: 100%; padding: 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg-0); color: var(--text); font-size: 16px; }
+.auth-field input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--accent-glow); }
+.auth-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; cursor: pointer; font-weight: 800; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; color: #fff; background: var(--accent); margin-top: 8px; box-shadow: 0 4px 15px var(--accent-glow); }
+.auth-btn:disabled { opacity: 0.5; }
+.auth-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 10px; min-height: 16px; }
 #mainApp { display: none; position: relative; z-index: 1; }
-#mainApp.show { display: block; animation: mainIn 0.5s var(--ease-smooth); }
-@keyframes mainIn { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-
-.top-bar {
-    background: var(--bg-2); padding: 14px 16px; border-radius: 16px; margin-bottom: 12px;
-    display: flex; justify-content: space-between; align-items: center;
-    border: 1px solid var(--border-light);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(96,165,250,0.08);
-    position: relative; overflow: hidden;
-}
-.top-bar::after {
-    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(96,165,250,0.08), transparent);
-    animation: barShimmer 4s infinite;
-}
-@keyframes barShimmer { 0% { left: -100%; } 100% { left: 100%; } }
-.top-bar b { color: var(--blue-bright); font-size: 20px; font-weight: 900; display: inline-block; }
-.top-bar b.bump { animation: balanceBump 0.4s var(--ease-spring); }
-@keyframes balanceBump { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
-.top-bar .user-info { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.user-badge { padding: 4px 10px; border-radius: 10px; font-weight: 800; font-size: 10px; letter-spacing: 1px; }
-.badge-admin { background: rgba(59,130,246,0.15); color: var(--blue-bright); border: 1px solid var(--blue-bright); animation: badgePulse 2.2s ease infinite; }
-@keyframes badgePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); } 50% { box-shadow: 0 0 0 6px rgba(59,130,246,0); } }
+#mainApp.show { display: block; }
+.top-bar { background: var(--bg-2); padding: 14px 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-light); }
+.top-bar b { color: var(--blue-bright); font-size: 20px; font-weight: 900; }
+.user-badge { padding: 4px 10px; border-radius: 10px; font-weight: 800; font-size: 10px; letter-spacing: 1px; margin-right: 6px; }
+.badge-admin { background: rgba(59,130,246,0.15); color: var(--blue-bright); border: 1px solid var(--blue-bright); }
 .badge-member { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid #a78bfa; }
-.logout-btn {
-    padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border-light);
-    background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer;
-    font-size: 12px; font-weight: 700;
-}
-.logout-btn:hover { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
-.logout-btn:active { transform: scale(0.95); }
-.admin-panel-btn {
-    position: absolute; top: 6px; right: 6px; width: 18px; height: 18px;
-    border-radius: 50%; border: none; background: transparent; cursor: pointer; opacity: 0; z-index: 10;
-}
-
-.tabs {
-    display: flex; gap: 6px; margin-bottom: 14px;
-    background: var(--bg-2); padding: 5px; border-radius: 14px;
-    border: 1px solid var(--border-light); overflow-x: auto;
-}
+.logout-btn { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; font-size: 12px; font-weight: 700; }
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; background: var(--bg-2); padding: 5px; border-radius: 14px; border: 1px solid var(--border-light); overflow-x: auto; }
 .tabs::-webkit-scrollbar { display: none; }
-.tab {
-    flex: 1; min-width: 68px; padding: 11px 6px; text-align: center; border-radius: 10px;
-    cursor: pointer; font-weight: 800; font-size: 12px; color: var(--muted);
-    border: 2px solid transparent; white-space: nowrap; background: transparent; position: relative;
-}
-.tab:hover:not(.active) { background: rgba(96,165,250,0.06); color: var(--text-dim); }
-.tab.active {
-    background: var(--accent); color: #fff;
-    box-shadow: 0 4px 14px var(--accent-glow); transform: translateY(-1px);
-}
+.tab { flex: 1; min-width: 68px; padding: 11px 6px; text-align: center; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 12px; color: var(--muted); white-space: nowrap; transition: all 0.25s; }
+.tab.active { background: var(--accent); color: #fff; }
 .tab.hidden { display: none; }
 .tab .badge { position: absolute; top: 2px; right: 4px; background: var(--red); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 800; display: none; }
-.tab .badge.show { display: block; animation: badgePop 0.45s var(--ease-spring); }
-@keyframes badgePop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-
+.tab .badge.show { display: block; }
 .tab-content { display: none; }
-.tab-content.active { display: block; animation: tabFadeIn 0.4s var(--ease-smooth); }
-@keyframes tabFadeIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
-
+.tab-content.active { display: block; }
 h2 { margin: 0 0 16px; font-size: 22px; text-align: center; letter-spacing: 2px; font-weight: 900; color: var(--blue-bright); }
-
-/* ===== WHEEL ===== */
-.wheel-outer {
-    position: relative; width: 280px; height: 280px; margin: 20px auto 16px;
-    filter: drop-shadow(0 0 25px rgba(59,130,246,0.25));
-    transition: filter 0.5s var(--ease-smooth);
-    animation: wheelIn 0.8s var(--ease-spring);
-}
-@keyframes wheelIn { 0% { opacity: 0; transform: scale(0.7) rotate(-30deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
-.wheel-outer.spinning { filter: drop-shadow(0 0 40px rgba(59,130,246,0.7)); }
-.wheel-outer.win-glow { filter: drop-shadow(0 0 60px rgba(34,197,94,0.8)); }
-.wheel-outer.lose-glow { filter: drop-shadow(0 0 60px rgba(239,68,68,0.6)); }
-.wheel-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 5px solid var(--bg-3); background: var(--bg-1);
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
-}
-.wheel-sector {
-    position: absolute; inset: 8px; border-radius: 50%;
-    background: conic-gradient(var(--blue) 0deg, #8b5cf6 var(--win-angle, 180deg), var(--bg-3) var(--win-angle, 180deg) 360deg);
-    transition: background 0.5s var(--ease-smooth);
-}
-.pointer-line {
-    position: absolute; top: 8px; left: 50%; width: 4px; height: 50%; margin-left: -2px;
-    background: linear-gradient(to bottom, #fff 0%, #fff 60%, transparent 100%);
-    transform-origin: bottom center; border-radius: 2px;
-    box-shadow: 0 0 15px rgba(255,255,255,0.9); z-index: 10;
-}
-.wheel-center-circle {
-    position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px;
-    background: var(--bg-2); border-radius: 50%; border: 3px solid var(--bg-3);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 11; box-shadow: 0 0 30px rgba(0,0,0,0.9);
-}
-.wheel-outer.spinning .wheel-center-circle { animation: centerPulse 1.1s ease infinite; }
-@keyframes centerPulse { 0%, 100% { box-shadow: 0 0 30px rgba(0,0,0,0.9); } 50% { box-shadow: 0 0 40px rgba(59,130,246,0.5); } }
+.wheel-outer { position: relative; width: 280px; height: 280px; margin: 20px auto 16px; }
+.wheel-ring { position: absolute; inset: 0; border-radius: 50%; border: 5px solid var(--bg-3); background: var(--bg-1); box-shadow: inset 0 0 30px rgba(0,0,0,0.9); }
+.wheel-sector { position: absolute; inset: 8px; border-radius: 50%; background: conic-gradient(var(--blue) 0deg, #8b5cf6 var(--win-angle, 180deg), var(--bg-3) var(--win-angle, 180deg) 360deg); transition: background 0.5s; }
+.pointer-line { position: absolute; top: 8px; left: 50%; width: 4px; height: 50%; margin-left: -2px; background: linear-gradient(to bottom, #fff 0%, #fff 60%, transparent 100%); transform-origin: bottom center; border-radius: 2px; box-shadow: 0 0 15px rgba(255,255,255,0.9); z-index: 10; }
+.wheel-center-circle { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px; background: var(--bg-2); border-radius: 50%; border: 3px solid var(--bg-3); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 11; }
 .wheel-center-circle .mult { font-size: 22px; font-weight: 900; color: var(--blue-bright); }
-.wheel-center-circle .chance-label { font-size: 9px; color: var(--muted); margin-top: 2px; letter-spacing: 1px; }
-
+.wheel-center-circle .chance-label { font-size: 9px; color: var(--muted); margin-top: 2px; }
 .quick-chances { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; margin: 0 auto 12px; max-width: 320px; }
-.quick-btn {
-    background: var(--bg-2); border: 2px solid var(--border); border-radius: 12px;
-    padding: 10px 2px; cursor: pointer; font-weight: 800; font-size: 12px; color: var(--text);
-    text-align: center; line-height: 1.3; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
+.quick-btn { background: var(--bg-2); border: 2px solid var(--border); border-radius: 12px; padding: 10px 2px; cursor: pointer; font-weight: 800; font-size: 12px; color: var(--text); text-align: center; line-height: 1.3; }
 .quick-btn small { display: block; font-size: 9px; color: var(--muted); font-weight: 500; }
-.quick-btn:hover:not(:disabled) { border-color: var(--blue-bright); transform: translateY(-2px); }
-.quick-btn.active { border-color: transparent; color: #fff; background: var(--accent); box-shadow: 0 4px 14px var(--accent-glow); transform: translateY(-2px); }
-.quick-btn.active small { color: rgba(255,255,255,0.85); }
-.quick-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.bet-row { display: flex; gap: 8px; align-items: stretch; }
-.bet-row input { flex: 1; }
-.bet-quick-btns { display: flex; gap: 5px; }
-.bet-quick-btns button {
-    padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--blue-bright);
-    background: rgba(59,130,246,0.1); color: var(--blue-bright); cursor: pointer;
-    font-weight: 800; font-size: 12px; white-space: nowrap;
-}
-.bet-quick-btns button:hover { background: rgba(59,130,246,0.2); transform: translateY(-1px); }
-.bet-quick-btns button:active { transform: scale(0.95); }
-
-.spin-buttons { display: flex; gap: 8px; }
-#spinBtn {
-    flex: 2; background: var(--accent); color: #fff; border: none; cursor: pointer;
-    font-weight: 900; font-size: 16px; letter-spacing: 3px; padding: 18px;
-    text-transform: uppercase; border-radius: 14px;
-    box-shadow: 0 6px 20px var(--accent-glow);
-    position: relative; overflow: hidden;
-}
-#spinBtn::before {
-    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.7s;
-}
-#spinBtn:hover:not(:disabled)::before { left: 100%; }
-#spinBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accent-glow); }
-#spinBtn:active:not(:disabled) { transform: scale(0.97); }
-#spinBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-#fastSpinBtn {
-    flex: 1; background: var(--bg-2); color: var(--muted); border: 1.5px solid var(--border-light);
-    cursor: pointer; font-weight: 900; font-size: 20px; border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-}
-#fastSpinBtn:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
-#fastSpinBtn.active { background: rgba(59,130,246,0.15); color: var(--blue-bright); border-color: var(--blue-bright); }
-#fastSpinBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-
+.quick-btn.active { border-color: transparent; color: #fff; background: var(--accent); }
 .percent-block { background: var(--bg-2); padding: 16px; border-radius: 14px; margin-bottom: 14px; border: 1px solid var(--border-light); }
 .percent-block > label { display: block; margin-bottom: 14px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
 .slider-wrap { position: relative; height: 40px; display: flex; align-items: center; margin: 0 0 10px; padding: 0 13px; }
 .slider-track { position: absolute; left: 13px; right: 13px; height: 8px; background: var(--bg-3); border-radius: 4px; overflow: hidden; pointer-events: none; }
-.slider-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--accent); border-radius: 4px; transition: width 0.15s ease; }
-.slider-thumb {
-    position: absolute; top: 50%; left: 13px; transform: translate(-50%, -50%);
-    width: 26px; height: 26px; background: #fff; border-radius: 50%;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.5), 0 0 0 3px var(--blue-bright);
-    pointer-events: none; transition: left 0.15s ease;
-}
-#percentSlider {
-    position: relative; width: 100%; height: 40px;
-    -webkit-appearance: none; appearance: none; background: transparent;
-    outline: none; cursor: pointer; z-index: 2; margin: 0;
-}
-#percentSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; background: transparent; border: none; cursor: pointer; }
-
+.slider-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--accent); border-radius: 4px; }
+.slider-thumb { position: absolute; top: 50%; left: 13px; transform: translate(-50%, -50%); width: 26px; height: 26px; background: #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(0,0,0,0.5), 0 0 0 3px var(--blue-bright); pointer-events: none; }
+#percentSlider { position: relative; width: 100%; height: 40px; -webkit-appearance: none; background: transparent; outline: none; cursor: pointer; z-index: 2; margin: 0; }
+#percentSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; background: transparent; border: none; }
 .percent-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 .percent-row input { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg-0); color: var(--text); font-size: 18px; font-weight: 900; text-align: center; }
 .percent-row span { font-size: 18px; font-weight: 900; color: var(--muted); }
 .multiplier-display { text-align: center; font-size: 13px; padding: 10px; background: var(--bg-0); border-radius: 10px; margin-top: 10px; border: 1px solid var(--border); }
-.multiplier-display b { color: var(--blue-bright); font-size: 20px; display: inline-block; }
-
-.controls { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
-input, button { padding: 12px; border-radius: 10px; border: 1px solid var(--border); font-size: 16px; font-family: inherit; }
-input { background: var(--bg-2); color: var(--text); }
-input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-
-#resultDisplay {
-    text-align: center; padding: 14px; background: var(--bg-2); border-radius: 12px;
-    margin: 12px 0; font-weight: 700; font-size: 14px; border: 1px solid var(--border-light);
-    min-height: 50px; display: flex; align-items: center; justify-content: center;
-}
-#resultDisplay.win { background: rgba(34,197,94,0.1); color: var(--green); border-color: var(--green); animation: winPop 0.7s var(--ease-spring); }
-#resultDisplay.lose { background: rgba(239,68,68,0.1); color: var(--red); border-color: var(--red); animation: loseShake 0.7s ease; }
-@keyframes winPop { 0% { transform: scale(0.7); opacity: 0; } 50% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes loseShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
-
-.confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
-.confetti { position: absolute; width: 10px; height: 10px; top: -20px; animation: confettiFall linear forwards; }
-@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
-
-/* ===== FORMS ===== */
-.request-block { background: var(--bg-2); padding: 18px; border-radius: 16px; margin-bottom: 14px; border: 1px solid var(--border-light); animation: tabFadeIn 0.5s ease; }
-.request-block h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-.form-field { margin-bottom: 14px; animation: fieldSlideIn 0.55s ease backwards; }
-.form-field:nth-child(2) { animation-delay: 0.05s; }
-.form-field:nth-child(3) { animation-delay: 0.1s; }
-@keyframes fieldSlideIn { 0% { opacity: 0; transform: translateX(-15px); } 100% { opacity: 1; transform: translateX(0); } }
-.form-field label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 7px; transition: all 0.35s; }
-.form-field:focus-within label { color: var(--blue-bright); transform: translateX(2px); }
-.form-field input { width: 100%; padding: 14px; border-radius: 11px; border: 1.5px solid var(--border); background: var(--bg-0); color: var(--text); font-size: 16px; font-family: inherit; }
-.form-field input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-.field-hint { font-size: 11px; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
-.field-hint::before { content: 'ℹ'; font-size: 10px; }
-
-.btn-primary {
-    width: 100%; background: var(--accent); color: #fff; border: none; cursor: pointer;
-    font-weight: 800; padding: 15px; border-radius: 12px; font-size: 14px; letter-spacing: 1px;
-    box-shadow: 0 4px 15px var(--accent-glow); position: relative; overflow: hidden;
-}
-.btn-primary::before {
-    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.7s;
-}
-.btn-primary:hover:not(:disabled)::before { left: 100%; }
-.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); }
-.btn-primary:active:not(:disabled) { transform: scale(0.97); }
-.btn-primary:disabled { background: var(--bg-3); opacity: 0.6; cursor: not-allowed; box-shadow: none; }
-
-.spam-timer { display: none; margin-top: 12px; padding: 14px; background: rgba(239,68,68,0.1); border: 1px solid var(--red); border-radius: 12px; text-align: center; }
-.spam-timer.show { display: block; animation: timerIn 0.5s var(--ease-spring); }
-@keyframes timerIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
-.spam-timer .timer-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
-.spam-timer .timer-value { font-size: 24px; font-weight: 900; color: var(--red); font-variant-numeric: tabular-nums; }
-
-/* ===== CHAT ===== */
+.multiplier-display b { color: var(--blue-bright); font-size: 20px; }
+.bet-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.bet-row input { flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg-2); color: var(--text); font-size: 16px; }
+.bet-row button { padding: 0 16px; border-radius: 10px; border: 1.5px solid var(--blue-bright); background: rgba(59,130,246,0.1); color: var(--blue-bright); cursor: pointer; font-weight: 800; font-size: 12px; }
+.spin-buttons { display: flex; gap: 8px; }
+#spinBtn { flex: 2; background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 900; font-size: 16px; letter-spacing: 3px; padding: 18px; text-transform: uppercase; border-radius: 14px; }
+#spinBtn:disabled { opacity: 0.5; }
+#fastSpinBtn { flex: 1; background: var(--bg-2); color: var(--muted); border: 1.5px solid var(--border-light); cursor: pointer; font-weight: 900; font-size: 20px; border-radius: 14px; }
+#fastSpinBtn.active { background: rgba(59,130,246,0.15); color: var(--blue-bright); border-color: var(--blue-bright); }
+#resultDisplay { text-align: center; padding: 14px; background: var(--bg-2); border-radius: 12px; margin: 12px 0; font-weight: 700; font-size: 14px; border: 1px solid var(--border-light); min-height: 50px; display: flex; align-items: center; justify-content: center; }
+#resultDisplay.win { background: rgba(34,197,94,0.1); color: var(--green); border-color: var(--green); }
+#resultDisplay.lose { background: rgba(239,68,68,0.1); color: var(--red); border-color: var(--red); }
+.request-block { background: var(--bg-2); padding: 18px; border-radius: 16px; margin-bottom: 14px; border: 1px solid var(--border-light); }
+.request-block h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 16px; }
+.form-field { margin-bottom: 14px; }
+.form-field label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 7px; }
+.form-field input { width: 100%; padding: 14px; border-radius: 11px; border: 1.5px solid var(--border); background: var(--bg-0); color: var(--text); font-size: 16px; }
+.btn-primary { width: 100%; background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 800; padding: 15px; border-radius: 12px; font-size: 14px; letter-spacing: 1px; }
+.btn-primary:disabled { background: var(--bg-3); opacity: 0.6; cursor: not-allowed; }
 .chat-layout { display: flex; gap: 10px; height: 460px; }
 .chat-list { width: 145px; background: var(--bg-2); border-radius: 14px; border: 1px solid var(--border-light); overflow-y: auto; padding: 6px; flex-shrink: 0; }
-.chat-list-item { padding: 10px 8px; border-radius: 10px; cursor: pointer; margin-bottom: 4px; border: 2px solid transparent; position: relative; animation: chatItemIn 0.45s ease backwards; }
-@keyframes chatItemIn { 0% { opacity: 0; transform: translateX(-15px); } 100% { opacity: 1; transform: translateX(0); } }
-.chat-list-item:hover { background: rgba(96,165,250,0.06); }
+.chat-list-item { padding: 10px 8px; border-radius: 10px; cursor: pointer; margin-bottom: 4px; border: 2px solid transparent; position: relative; }
 .chat-list-item.active { background: rgba(59,130,246,0.12); border-color: var(--blue-bright); }
 .chat-list-item.unread { background: rgba(239,68,68,0.08); }
 .chat-list-item .nick { font-weight: 800; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chat-list-item .last-msg { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
-.chat-list-item .unread-dot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; display: none; animation: dotPulse 1.6s ease infinite; }
-@keyframes dotPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 50% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
+.chat-list-item .last { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+.chat-list-item .unread-dot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; display: none; }
 .chat-list-item.unread .unread-dot { display: block; }
-.chat-list-item .status-tag { font-size: 9px; padding: 2px 6px; border-radius: 6px; margin-top: 4px; display: inline-block; font-weight: 800; }
+.status-tag { font-size: 9px; padding: 2px 6px; border-radius: 6px; margin-top: 4px; display: inline-block; font-weight: 800; }
 .status-pending { background: rgba(251,191,36,0.15); color: var(--gold); }
 .status-accepted { background: rgba(34,197,94,0.15); color: var(--green); }
 .status-rejected { background: rgba(239,68,68,0.15); color: var(--red); }
 .status-paid { background: rgba(34,197,94,0.15); color: var(--green); }
-
 .chat-main { flex: 1; background: var(--bg-2); border-radius: 14px; border: 1px solid var(--border-light); display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 .chat-main-header { padding: 11px 13px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .chat-main-header .chat-with { font-size: 10px; padding: 3px 9px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 700; }
 .chat-main .chat-log { flex: 1; margin: 0; border-radius: 0; border: none; height: auto; overflow-y: auto; }
-.chat-empty { display: flex; align-items: center; justify-content: center; flex: 1; color: var(--muted); font-size: 13px; text-align: center; padding: 20px; animation: emptyPulse 2.8s ease infinite; }
-@keyframes emptyPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
-
+.chat-empty { display: flex; align-items: center; justify-content: center; flex: 1; color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
 .admin-action-bar { padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
 .admin-action-bar button { flex: 1; padding: 12px; border-radius: 11px; border: none; cursor: pointer; font-weight: 800; font-size: 12px; color: #fff; }
-.btn-credit { background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); }
-.btn-credit:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-glow); }
-.btn-credit:active { transform: scale(0.96); }
-.btn-credit-red { background: var(--red); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
-.btn-credit-red:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(239,68,68,0.45); }
-.btn-credit-red:active { transform: scale(0.96); }
-
+.btn-credit { background: var(--accent); }
+.btn-credit-red { background: var(--red); }
 .chat-log { padding: 10px; border-radius: 10px; height: 240px; overflow-y: auto; font-size: 13px; background: var(--bg-0); display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; border: 1px solid var(--border); scroll-behavior: smooth; }
-.msg { padding: 8px 12px; border-radius: 12px; max-width: 82%; word-wrap: break-word; font-size: 13px; line-height: 1.4; animation: messageIn 0.45s var(--ease-spring); }
+.msg { padding: 8px 12px; border-radius: 12px; max-width: 82%; word-wrap: break-word; font-size: 13px; line-height: 1.4; }
 .msg.player { background: var(--bg-3); color: #fff; align-self: flex-start; border-bottom-left-radius: 4px; }
 .msg.admin { background: var(--accent); color: #fff; font-weight: 600; align-self: flex-end; border-bottom-right-radius: 4px; margin-left: auto; }
 .msg.system { background: transparent; color: var(--muted); font-size: 11px; text-align: center; align-self: center; font-style: italic; max-width: 100%; }
-.msg.success { background: rgba(34,197,94,0.15); color: var(--green); align-self: center; font-weight: 700; max-width: 100%; text-align: center; animation: successPop 0.55s var(--ease-spring); }
+.msg.success { background: rgba(34,197,94,0.15); color: var(--green); align-self: center; font-weight: 700; max-width: 100%; text-align: center; }
 .msg.danger { background: rgba(239,68,68,0.15); color: var(--red); align-self: center; font-weight: 700; max-width: 100%; text-align: center; }
-@keyframes successPop { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes messageIn { 0% { opacity: 0; transform: translateY(10px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-
 .chat-input-row { display: flex; gap: 8px; padding: 8px; flex-shrink: 0; border-top: 1px solid var(--border); }
 .chat-input-row input { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg-1); color: var(--text); font-size: 16px; }
-.chat-input-row input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
 .chat-input-row button { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-size: 14px; color: #fff; background: var(--accent); }
-.chat-input-row button:hover { transform: translateY(-1px); }
-.chat-input-row button:active { transform: scale(0.94); }
-
-/* ===== TASKS ===== */
-.task-card { background: var(--bg-2); padding: 18px; border-radius: 16px; margin-bottom: 14px; border: 1px solid var(--border-light); animation: tabFadeIn 0.5s ease; }
-.task-card .task-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.task-card .task-icon { font-size: 32px; }
-.task-card .task-title { font-weight: 900; font-size: 16px; color: var(--text); }
-.task-card .task-reward { margin-left: auto; font-size: 13px; font-weight: 900; color: var(--gold); background: rgba(251,191,36,0.12); padding: 5px 12px; border-radius: 10px; border: 1px solid rgba(251,191,36,0.3); }
-.task-card .task-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin-bottom: 14px; }
-.task-card .task-btn { width: 100%; padding: 13px; border-radius: 12px; border: none; cursor: pointer; font-weight: 800; font-size: 14px; color: #fff; background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); }
-.task-card .task-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px var(--accent-glow); }
-.task-card .task-btn:active:not(:disabled) { transform: scale(0.97); }
-.task-card .task-btn:disabled { background: var(--bg-3); opacity: 0.6; cursor: not-allowed; box-shadow: none; }
-
-/* ===== LEADERBOARD ===== */
-.leaderboard-list { display: flex; flex-direction: column; gap: 8px; animation: tabFadeIn 0.4s var(--ease-smooth); }
-.leader-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--border-light); transition: all 0.2s; animation: chatItemIn 0.45s ease backwards; }
-.leader-row:hover { background: rgba(96,165,250,0.04); }
-.leader-row.top1 { background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(59,130,246,0.12)); border-color: var(--gold); box-shadow: 0 4px 20px rgba(251,191,36,0.2); }
-.leader-row.top2 { background: linear-gradient(135deg, rgba(203,213,225,0.1), rgba(255,255,255,0.05)); border-color: var(--silver); }
-.leader-row.top3 { background: linear-gradient(135deg, rgba(205,127,50,0.1), rgba(59,130,246,0.05)); border-color: var(--bronze); }
+.leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
+.leader-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--border-light); }
 .leader-rank { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; background: var(--bg-3); color: var(--text-dim); flex-shrink: 0; }
 .leader-row.top1 .leader-rank { background: var(--gold); color: #2a1a00; }
 .leader-row.top2 .leader-rank { background: var(--silver); color: #1a1a1a; }
@@ -549,42 +138,13 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
 .leader-amount small { font-size: 10px; font-weight: 600; opacity: 0.7; display: block; }
 .leader-row.top1 .leader-amount { color: var(--gold); }
 .leader-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
-
-/* ===== ADMIN PANEL ===== */
-.admin-panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 15000; padding: 20px; animation: fadeIn 0.3s ease; }
-.admin-panel { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 20px; padding: 24px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; animation: modalBoxIn 0.45s var(--ease-spring); }
-.admin-panel h2 { margin-bottom: 20px; font-size: 18px; color: var(--blue-bright); }
-.admin-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-.admin-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-.admin-section h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 700; }
-.admin-panel .close-btn { width: 100%; padding: 13px; border-radius: 12px; border: 1px solid var(--border-light); background: transparent; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 14px; margin-top: 12px; }
-.admin-panel .close-btn:hover { color: var(--text); border-color: var(--text-dim); }
-.force-win-row { display: flex; gap: 8px; }
-.force-win-row button { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-1); color: var(--text); cursor: pointer; font-weight: 700; font-size: 13px; }
-.force-win-row button:hover { border-color: var(--text-dim); }
-.force-win-row button.active { background: var(--accent); border-color: transparent; color: #fff; }
-
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px; animation: fadeIn 0.3s ease; }
-.modal-box { background: var(--bg-2); padding: 24px; border-radius: 18px; border: 1px solid var(--border-light); max-width: 360px; width: 100%; text-align: center; animation: modalBoxIn 0.45s var(--ease-spring); }
-@keyframes modalBoxIn { 0% { opacity: 0; transform: scale(0.85) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-box .modal-icon { font-size: 40px; margin-bottom: 10px; animation: iconPop 0.65s var(--ease-spring); }
-.modal-box .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; color: var(--text); }
-.modal-box .modal-text { font-size: 14px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px; }
-.modal-actions { display: flex; gap: 8px; }
-.modal-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-size: 14px; color: #fff; background: var(--accent); }
-.modal-btn:hover { transform: translateY(-1px); }
-.modal-btn:active { transform: scale(0.97); }
-.modal-btn.secondary { background: var(--bg-3); color: var(--text-dim); }
 </style>
 </head>
 <body>
 
 <div id="toastContainer"></div>
-<div id="saveIndicator">💾 Сохранено</div>
 
-<!-- AUTH -->
 <div id="authScreen">
-    <div id="authParticles"></div>
     <div class="auth-box">
         <div class="auth-logo">BloxUp</div>
         <p class="auth-subtitle">ВХОД В СИСТЕМУ</p>
@@ -594,18 +154,17 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
         </div>
         <div class="auth-field">
             <label>Ник</label>
-            <input type="text" id="authNick" placeholder="Введи ник" maxlength="20" autocomplete="username">
+            <input type="text" id="authNick" placeholder="Введи ник" maxlength="20">
         </div>
         <div class="auth-field">
             <label>Пароль</label>
-            <input type="password" id="authPassword" placeholder="Введи пароль" maxlength="30" autocomplete="current-password">
+            <input type="password" id="authPassword" placeholder="Введи пароль" maxlength="30">
         </div>
         <button class="auth-btn" id="authBtn">Войти</button>
         <div class="auth-error" id="authError"></div>
     </div>
 </div>
 
-<!-- MAIN -->
 <div id="mainApp">
     <div class="top-bar">
         <div>Баланс: <b id="balanceDisplay">0</b> R$</div>
@@ -613,7 +172,6 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
             <span class="user-badge" id="userBadge" style="display:none;"></span>
             <span id="userNickDisplay" style="color:var(--text-dim);"></span>
             <button class="logout-btn" id="logoutBtn">Выйти</button>
-            <button class="admin-panel-btn" id="adminPanelBtn" style="display:none;"></button>
         </div>
     </div>
 
@@ -621,7 +179,6 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
         <div class="tab active" data-tab="upgrader">🎰 Улучшить</div>
         <div class="tab" data-tab="chat">💳 Пополнение</div>
         <div class="tab" data-tab="withdraw">💸 Вывод</div>
-        <div class="tab" data-tab="tasks">🎯 Задания</div>
         <div class="tab" data-tab="leaders">🏆 Лидеры</div>
         <div class="tab hidden" data-tab="adminChats" id="adminTab">👑 Чаты <span class="badge" id="chatsBadge">0</span></div>
     </div>
@@ -677,18 +234,13 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
             <h3>Заявка на пополнение</h3>
             <div class="form-field">
                 <label for="nickInput">Ник игрока</label>
-                <input type="text" id="nickInput" placeholder="Впиши ник, с которого хочешь пополнить" maxlength="20" autocomplete="off">
-                <div class="field-hint">Впиши ник, с которого хочешь пополнить</div>
+                <input type="text" id="nickInput" placeholder="Впиши ник, с которого хочешь пополнить" maxlength="20">
             </div>
             <div class="form-field">
                 <label for="amountInput">Сумма пополнения (R$)</label>
-                <input type="number" id="amountInput" value="100" min="1" placeholder="Сколько R$ хочешь пополнить?">
+                <input type="number" id="amountInput" value="100" min="1">
             </div>
             <button class="btn-primary" id="sendRequestBtn">Отправить заявку</button>
-            <div class="spam-timer" id="spamTimer">
-                <div class="timer-label">Подожди перед новой заявкой</div>
-                <div class="timer-value" id="spamTimerValue">05:00</div>
-            </div>
         </div>
         <div id="playerChatWindow" style="display:none;">
             <div class="request-block" style="padding:14px;">
@@ -708,12 +260,11 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
             <h3>Заявка на вывод</h3>
             <div class="form-field">
                 <label for="withdrawNick">Твой ник</label>
-                <input type="text" id="withdrawNick" placeholder="Введи свой ник" maxlength="20" autocomplete="off">
+                <input type="text" id="withdrawNick" placeholder="Введи свой ник" maxlength="20">
             </div>
             <div class="form-field">
                 <label for="withdrawAmount">Сумма вывода (R$)</label>
-                <input type="number" id="withdrawAmount" value="100" min="1" placeholder="Сколько хочешь вывести?">
-                <div class="field-hint">Не больше твоего баланса</div>
+                <input type="number" id="withdrawAmount" value="100" min="1">
             </div>
             <button class="btn-primary" id="sendWithdrawBtn">Отправить заявку</button>
         </div>
@@ -724,30 +275,6 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
                 <div class="chat-input-row">
                     <input type="text" id="withdrawMessageInput" placeholder="Написать сообщение..." maxlength="200">
                     <button id="withdrawSendBtn">➤</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="tab-content" id="tab-tasks">
-        <h2>ЗАДАНИЯ</h2>
-        <div style="text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:18px;line-height:1.5;">Выполняй задания и получай робуксы на баланс.</div>
-        <div class="task-card">
-            <div class="task-header">
-                <div class="task-icon">🎬</div>
-                <div class="task-title">TikTok Roblox</div>
-                <div class="task-reward">+25 R$</div>
-            </div>
-            <div class="task-desc">Напиши 10 комментариев в TikTok под видео про Roblox. Скриншоты скинь в чат админу.</div>
-            <button class="task-btn" data-task="tiktok-10-comments" data-reward="25">Выполнить задание</button>
-        </div>
-        <div id="taskChatWindow" style="display:none;margin-top:16px;">
-            <div class="request-block" style="padding:14px;">
-                <h3 style="margin-bottom:10px;">Чат по заданию <span style="font-size:11px;padding:3px 9px;border-radius:8px;background:var(--accent);color:#fff;" id="taskChatWith"></span></h3>
-                <div class="chat-log" id="taskChatLog"></div>
-                <div class="chat-input-row">
-                    <input type="text" id="taskMessageInput" placeholder="Скинь результат..." maxlength="500">
-                    <button id="taskSendBtn">➤</button>
                 </div>
             </div>
         </div>
@@ -785,1010 +312,377 @@ input:focus { outline: none; border-color: var(--blue-bright); box-shadow: 0 0 0
     </div>
 </div>
 
-<div class="confetti-container" id="confettiContainer"></div>
-
+<script src="/socket.io/socket.io.js"></script>
 <script>
-/* ===== STORAGE ===== */
-const STORAGE_KEY = 'bloxup_save_v2';
-const STATS_KEY = 'bloxup_stats_v2';
+const $ = id => document.getElementById(id);
+const escapeHtml = t => { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
+let TOKEN = localStorage.getItem('bloxup_token');
+let socket = null;
+let currentUser = null;
+let balance = 0;
+let isSpinning = false, fastMode = false, pointerRotation = 0;
+let currentPlayerChatId = null, currentWithdrawChatId = null, activeAdminChatId = null;
+let chatsCache = {};
+let chatHistoryCache = {};
 
-function saveState() {
-    try {
-        const state = {
-            users, chats, spamTracker,
-            currentUser, balance, chatIdCounter,
-            selectedPercent: parseFloat(percentInput.value) || 50,
-            currentBet: parseInt(betInput.value) || 100,
-            lastNick: nickInput.value || '',
-            lastWithdrawNick: withdrawNick.value || '',
-            ts: Date.now()
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        flashSave();
-    } catch(e) { console.warn('save', e); }
-}
-function loadState() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }
-    catch(e) { return null; }
-}
-function flashSave() {
-    saveIndicator.classList.add('show');
-    clearTimeout(flashSave._t);
-    flashSave._t = setTimeout(() => saveIndicator.classList.remove('show'), 1500);
+async function api(path, data = null) {
+    const options = { headers: { 'Content-Type': 'application/json' } };
+    if (TOKEN) options.headers['Authorization'] = 'Bearer ' + TOKEN;
+    if (data) { options.method = 'POST'; options.body = JSON.stringify(data); }
+    const res = await fetch(path, options);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Ошибка');
+    return json;
 }
 
-/* ===== TELEGRAM ===== */
-const tg = window.Telegram ? window.Telegram.WebApp : null;
-if (tg) {
-    try {
-        tg.ready(); tg.expand();
-        tg.setHeaderColor('#0a1020'); tg.setBackgroundColor('#0a1020');
-        if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
-        if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
-    } catch(e){}
-}
-function haptic(type){
-    if(!tg||!tg.HapticFeedback)return;
-    try{
-        if(type==='light')tg.HapticFeedback.impactOccurred('light');
-        else if(type==='medium')tg.HapticFeedback.impactOccurred('medium');
-        else if(type==='heavy')tg.HapticFeedback.impactOccurred('heavy');
-        else if(type==='success')tg.HapticFeedback.notificationOccurred('success');
-        else if(type==='error')tg.HapticFeedback.notificationOccurred('error');
-        else if(type==='warning')tg.HapticFeedback.notificationOccurred('warning');
-    }catch(e){}
-}
+function connectSocket() {
+    if (socket) socket.disconnect();
+    socket = io({ auth: { token: TOKEN }, transports: ['websocket', 'polling'] });
+    socket.on('connect', () => console.log('Socket connected'));
+    socket.on('connect_error', (err) => { showToast('Ошибка подключения: ' + err.message, 'error'); });
 
-/* ===== SOUND ===== */
-let audioCtx=null;
-function initAudio(){ if(audioCtx)return; try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
-function playTone(freq,dur,type='sine',vol=0.1){
-    if(!audioCtx)return;
-    try{
-        const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-        o.type=type;o.frequency.value=freq;g.gain.value=vol;
-        g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
-        o.connect(g);g.connect(audioCtx.destination);
-        o.start();o.stop(audioCtx.currentTime+dur);
-    }catch(e){}
-}
-function playNewOrderSound(){initAudio();playTone(880,0.1,'sine',0.1);setTimeout(()=>playTone(1200,0.1,'sine',0.1),120);}
-function playWinSound(){initAudio();playTone(523,0.1,'sine',0.1);setTimeout(()=>playTone(659,0.1,'sine',0.1),100);setTimeout(()=>playTone(784,0.2,'sine',0.1),200);}
-function playLoseSound(){initAudio();playTone(300,0.15,'sawtooth',0.08);setTimeout(()=>playTone(200,0.25,'sawtooth',0.08),150);}
-function playAcceptSound(){initAudio();playTone(660,0.1,'sine',0.1);setTimeout(()=>playTone(880,0.15,'sine',0.1),100);}
-function playAuthSound(){initAudio();playTone(523,0.08,'sine',0.08);setTimeout(()=>playTone(659,0.08,'sine',0.08),80);setTimeout(()=>playTone(784,0.12,'sine',0.08),160);}
-document.addEventListener('touchstart',initAudio,{once:true});
-document.addEventListener('click',initAudio,{once:true});
-
-/* ===== TOASTS ===== */
-const toastContainer=document.getElementById('toastContainer');
-const saveIndicator=document.getElementById('saveIndicator');
-function showToast(text,type='info',icon=null,duration=3500){
-    const icons={success:'✓',error:'✕',info:'ℹ',warn:'⚠'};
-    const t=document.createElement('div');
-    t.className='toast '+type;
-    t.innerHTML=`<div class="toast-icon">${icon||icons[type]||'ℹ'}</div><div>${text}</div>`;
-    toastContainer.appendChild(t);
-    setTimeout(()=>{t.classList.add('closing');setTimeout(()=>t.remove(),300);},duration);
-}
-
-/* ===== STATE ===== */
-const RIG_FACTOR = 1.5;
-const ADMIN_NICK = '666';
-
-let balance=0;
-let isSpinning=false;
-let fastMode=false;
-let pointerRotation=0;
-let currentUser=null;
-let currentPlayerChatId=null;
-let currentWithdrawChatId=null;
-let currentTaskChatId=null;
-let activeAdminChatId=null;
-let chatIdCounter=0;
-let adminForceMode='random';
-
-let playerStats = {};
-try { playerStats = JSON.parse(localStorage.getItem(STATS_KEY) || '{}'); } catch(e){}
-function savePlayerStats(){ try { localStorage.setItem(STATS_KEY, JSON.stringify(playerStats)); } catch(e){} }
-function getPlayerStat(nick){ if(!playerStats[nick]) playerStats[nick] = { won: 0, lost: 0, spins: 0 }; return playerStats[nick]; }
-
-const users={ '666': { password:'333777228', role:'admin' } };
-const chats={};
-const spamTracker={};
-
-const $=id=>document.getElementById(id);
-const authScreen=$('authScreen'),mainApp=$('mainApp');
-const authNick=$('authNick'),authPassword=$('authPassword');
-const authBtn=$('authBtn'),authError=$('authError');
-const authTabs=document.querySelectorAll('.auth-tab');
-const authTabsContainer=$('authTabs');
-const userBadge=$('userBadge'),userNickDisplay=$('userNickDisplay');
-const logoutBtn=$('logoutBtn'),adminPanelBtn=$('adminPanelBtn'),adminTab=$('adminTab');
-const chatsBadge=$('chatsBadge'),chatCount=$('chatCount');
-const wheelOuter=$('wheelOuter'),wheelSector=$('wheelSector');
-const pointerLine=$('pointerLine'),spinBtn=$('spinBtn'),fastSpinBtn=$('fastSpinBtn'),allInBtn=$('allInBtn');
-const betInput=$('betAmount'),resultDisplay=$('resultDisplay');
-const balanceDisplay=$('balanceDisplay');
-const percentSlider=$('percentSlider'),percentInput=$('percentInput');
-const sliderFill=$('sliderFill'),sliderThumb=$('sliderThumb'),sliderWrap=$('sliderWrap');
-const multiplierDisplay=$('multiplierDisplay'),multiplierDisplay2=$('multiplierDisplay2');
-const confettiContainer=$('confettiContainer');
-const quickButtons=document.querySelectorAll('.quick-btn');
-const playerChatWindow=$('playerChatWindow');
-const playerChatWith=$('playerChatWith'),playerChatLog=$('playerChatLog');
-const playerMessageInput=$('playerMessageInput'),playerSendBtn=$('playerSendBtn');
-const nickInput=$('nickInput'),amountInput=$('amountInput');
-const sendRequestBtn=$('sendRequestBtn');
-const spamTimer=$('spamTimer'),spamTimerValue=$('spamTimerValue');
-const withdrawNick=$('withdrawNick'),withdrawAmount=$('withdrawAmount');
-const sendWithdrawBtn=$('sendWithdrawBtn');
-const withdrawChatWindow=$('withdrawChatWindow');
-const withdrawChatWith=$('withdrawChatWith'),withdrawChatLog=$('withdrawChatLog');
-const withdrawMessageInput=$('withdrawMessageInput'),withdrawSendBtn=$('withdrawSendBtn');
-const taskChatWindow=$('taskChatWindow');
-const taskChatWith=$('taskChatWith'),taskChatLog=$('taskChatLog');
-const taskMessageInput=$('taskMessageInput'),taskSendBtn=$('taskSendBtn');
-const adminChatList=$('adminChatList'),adminChatHeader=$('adminChatHeader');
-const adminChatNick=$('adminChatNick'),adminChatEmpty=$('adminChatEmpty');
-const adminChatLog=$('adminChatLog'),adminMessageInput=$('adminMessageInput');
-const adminSendBtn=$('adminSendBtn'),adminInputRow=$('adminInputRow');
-const adminActionBar=$('adminActionBar');
-const adminCreditBtn=$('adminCreditBtn'),adminRejectBtn=$('adminRejectBtn');
-const leaderboardList=$('leaderboardList');
-
-/* ===== AUTH PARTICLES ===== */
-function createParticles(){
-    const container = $('authParticles');
-    const colors = ['', 'violet', 'white', '', 'violet'];
-    const sizes = ['small', '', '', 'big'];
-    for(let i = 0; i < 30; i++){
-        const p = document.createElement('div');
-        p.className = 'auth-particle ' + colors[Math.floor(Math.random()*colors.length)] + ' ' + sizes[Math.floor(Math.random()*sizes.length)];
-        p.style.left = Math.random()*100 + '%';
-        p.style.bottom = '-20px';
-        const dur = 6 + Math.random()*8;
-        p.style.animationDuration = dur + 's';
-        p.style.animationDelay = (Math.random()*dur) + 's';
-        container.appendChild(p);
-    }
-}
-createParticles();
-
-/* ===== MODAL ===== */
-function showModal(title,text,icon='ℹ️',actions=null){
-    const overlay=document.createElement('div');
-    overlay.className='modal-overlay';
-    let buttonsHtml;
-    if(actions&&actions.length){
-        buttonsHtml=`<div class="modal-actions">${actions.map((a,i)=>
-            `<button class="modal-btn ${a.secondary?'secondary':''}" data-idx="${i}">${a.label}</button>`
-        ).join('')}</div>`;
-    }else{
-        buttonsHtml=`<button class="modal-btn" data-idx="0">ОК</button>`;
-    }
-    overlay.innerHTML=`<div class="modal-box">
-        <div class="modal-icon">${icon}</div>
-        <div class="modal-title">${title}</div>
-        <div class="modal-text">${text}</div>
-        ${buttonsHtml}
-    </div>`;
-    document.body.appendChild(overlay);
-    const close=()=>overlay.remove();
-    overlay.querySelectorAll('.modal-btn').forEach((btn,i)=>{
-        btn.addEventListener('click',()=>{
-            haptic('light');
-            if(actions&&actions[i]&&actions[i].onClick)actions[i].onClick();
-            close();
-        });
+    socket.on('chatList', list => {
+        chatsCache = {};
+        list.forEach(c => chatsCache[c.id] = c);
+        if (currentUser && currentUser.role === 'admin') renderChatList();
     });
-    overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+
+    socket.on('message', msg => {
+        if (msg.chat_id === currentPlayerChatId) {
+            chatHistoryCache[msg.chat_id] = chatHistoryCache[msg.chat_id] || [];
+            chatHistoryCache[msg.chat_id].push(msg);
+            renderPlayerChat();
+        }
+        if (msg.chat_id === currentWithdrawChatId) {
+            chatHistoryCache[msg.chat_id] = chatHistoryCache[msg.chat_id] || [];
+            chatHistoryCache[msg.chat_id].push(msg);
+            renderWithdrawChat();
+        }
+        if (msg.chat_id === activeAdminChatId) {
+            chatHistoryCache[msg.chat_id] = chatHistoryCache[msg.chat_id] || [];
+            chatHistoryCache[msg.chat_id].push(msg);
+            renderAdminChat();
+        }
+        if (currentUser && currentUser.role === 'admin') updateBadge();
+    });
+
+    socket.on('history', ({ chatId, messages }) => {
+        chatHistoryCache[chatId] = messages;
+        if (chatId === currentPlayerChatId) renderPlayerChat();
+        if (chatId === currentWithdrawChatId) renderWithdrawChat();
+        if (chatId === activeAdminChatId) renderAdminChat();
+    });
 }
 
-/* ===== AUTH ===== */
-let authMode='login';
-authTabs.forEach(t=>{
-    t.addEventListener('click',()=>{
-        haptic('light');
-        authTabs.forEach(x=>x.classList.remove('active'));
+function showToast(text, type = 'info') {
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.textContent = text;
+    $('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+async function tryRestore() {
+    if (!TOKEN) return;
+    try {
+        const me = await api('/api/me');
+        balance = me.balance;
+        connectSocket();
+        loginUser(me.nick, me.role);
+    } catch (e) { localStorage.removeItem('bloxup_token'); TOKEN = null; }
+}
+
+let authMode = 'login';
+document.querySelectorAll('.auth-tab').forEach(t => {
+    t.addEventListener('click', () => {
+        document.querySelectorAll('.auth-tab').forEach(x => x.classList.remove('active'));
         t.classList.add('active');
-        authMode=t.dataset.auth;
-        authBtn.textContent=authMode==='login'?'Войти':'Зарегистрироваться';
-        authError.textContent='';
-        authError.classList.remove('show');
-        if(authMode==='register') authTabsContainer.classList.add('register-mode');
-        else authTabsContainer.classList.remove('register-mode');
+        authMode = t.dataset.auth;
+        $('authBtn').textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
+        $('authError').textContent = '';
     });
 });
 
-authBtn.addEventListener('click',()=>{
-    const nick=authNick.value.trim();
-    const password=authPassword.value;
-    authError.textContent='';
-    authError.classList.remove('show');
-    if(!nick){showAuthError('Введи ник');return;}
-    if(!password){showAuthError('Введи пароль');return;}
-    if(authMode==='login'){
-        if(!users[nick]){showAuthError('Такого пользователя нет');return;}
-        if(users[nick].password!==password){showAuthError('Неверный пароль');return;}
-        authBtn.classList.add('loading');
-        setTimeout(()=>{
-            authBtn.classList.remove('loading');
-            showSuccess(()=>loginUser(nick,users[nick].role));
-        }, 400);
-    }else{
-        if(users[nick]){showAuthError('Этот ник уже занят');return;}
-        users[nick]={password,role:'member'};
-        saveState();
-        authBtn.classList.add('loading');
-        setTimeout(()=>{
-            authBtn.classList.remove('loading');
-            showSuccess(()=>loginUser(nick,'member'));
-        }, 400);
-    }
-});
-authPassword.addEventListener('keydown',e=>{if(e.key==='Enter')authBtn.click();});
-
-function showAuthError(text){
-    authError.textContent=text;
-    authError.classList.add('show');
-    authError.classList.remove('shake');
-    void authError.offsetWidth;
-    authError.classList.add('shake');
-    haptic('error');
-}
-function showSuccess(callback){
-    playAuthSound(); haptic('success');
-    const overlay=document.createElement('div');
-    overlay.className='auth-success-overlay';
-    overlay.innerHTML=`<div class="checkmark">✓</div><div class="success-text">Успешно!</div>`;
-    document.body.appendChild(overlay);
-    setTimeout(()=>{
-        overlay.style.opacity='0'; overlay.style.transition='opacity 0.3s';
-        setTimeout(()=>{overlay.remove();callback();},300);
-    },600);
-}
-
-function loginUser(nick,role,fromRestore=false){
-    currentUser={nick,role};
-    if(!fromRestore) balance = 0;
-    authScreen.style.opacity='0'; authScreen.style.transition='opacity 0.4s';
-    setTimeout(()=>{
-        authScreen.style.display='none';
-        mainApp.classList.add('show');
-        userNickDisplay.textContent=nick;
-        balanceDisplay.textContent=balance;
-        if(role==='admin'){
-            userBadge.style.display='inline-block';
-            userBadge.textContent='АДМИН';
-            userBadge.className='user-badge badge-admin';
-            adminTab.classList.remove('hidden');
-            adminPanelBtn.style.display='block';
-        }else{
-            userBadge.style.display='inline-block';
-            userBadge.textContent='MEMBER';
-            userBadge.className='user-badge badge-member';
-            adminTab.classList.add('hidden');
-            adminPanelBtn.style.display='none';
-        }
-        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-        document.querySelector('.tab[data-tab="upgrader"]').classList.add('active');
-        $('tab-upgrader').classList.add('active');
-        updateSpamTimer();
-        updateSliderVisual();
-        renderChatList();
-        updateBadge();
-        renderLeaderboard();
-        saveState();
-    },400);
-}
-
-logoutBtn.addEventListener('click',()=>{
-    haptic('light');
-    currentUser=null;currentPlayerChatId=null;currentWithdrawChatId=null;currentTaskChatId=null;activeAdminChatId=null;
-    authNick.value='';authPassword.value='';authError.textContent='';
-    authError.classList.remove('show');
-    authBtn.textContent='Войти';
-    authMode='login';
-    authTabsContainer.classList.remove('register-mode');
-    authTabs.forEach(t=>t.classList.remove('active'));
-    authTabs[0].classList.add('active');
-    mainApp.classList.remove('show');
-    authScreen.style.display='flex';
-    authScreen.style.opacity='1';
-    saveState();
+$('authBtn').addEventListener('click', async () => {
+    const nick = $('authNick').value.trim();
+    const password = $('authPassword').value;
+    if (!nick || !password) { $('authError').textContent = 'Заполни поля'; return; }
+    $('authBtn').disabled = true;
+    try {
+        const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+        const data = await api(endpoint, { nick, password });
+        TOKEN = data.token;
+        localStorage.setItem('bloxup_token', TOKEN);
+        balance = data.balance;
+        connectSocket();
+        loginUser(data.nick, data.role);
+    } catch (e) { $('authError').textContent = e.message; } finally { $('authBtn').disabled = false; }
 });
 
-/* ===== SPAM ===== */
-function getSpamData(nick){ if(!spamTracker[nick])spamTracker[nick]={timestamps:[],blockedUntil:0}; return spamTracker[nick]; }
-function checkSpam(nick){
-    const d=getSpamData(nick),now=Date.now();
-    if(d.blockedUntil>now)return{ok:false,remaining:Math.ceil((d.blockedUntil-now)/1000)};
-    if(d.timestamps.length>=5){d.blockedUntil=now+300000;d.timestamps=[];saveState();return{ok:false,remaining:300};}
-    return{ok:true};
-}
-function recordRequest(nick){getSpamData(nick).timestamps.push(Date.now());saveState();}
-function formatTime(sec){const m=Math.floor(sec/60),s=sec%60;return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
-function updateSpamTimer(){
-    if(!currentUser)return;
-    const nick=nickInput.value.trim()||currentUser.nick;
-    const d=getSpamData(nick),now=Date.now();
-    if(d.blockedUntil>now){
-        const sec=Math.ceil((d.blockedUntil-now)/1000);
-        spamTimer.classList.add('show');spamTimerValue.textContent=formatTime(sec);
-        sendRequestBtn.disabled=true;sendRequestBtn.textContent='Заблокировано';return;
+function loginUser(nick, role) {
+    currentUser = { nick, role };
+    $('authScreen').style.display = 'none';
+    $('mainApp').classList.add('show');
+    $('userNickDisplay').textContent = nick;
+    $('balanceDisplay').textContent = balance;
+    $('userBadge').style.display = 'inline-block';
+    if (role === 'admin') {
+        $('userBadge').textContent = 'АДМИН';
+        $('userBadge').className = 'user-badge badge-admin';
+        $('adminTab').classList.remove('hidden');
+    } else {
+        $('userBadge').textContent = 'MEMBER';
+        $('userBadge').className = 'user-badge badge-member';
+        $('adminTab').classList.add('hidden');
     }
-    spamTimer.classList.remove('show');
-    sendRequestBtn.disabled=false;sendRequestBtn.textContent='Отправить заявку';
-    if(d.blockedUntil!==0)d.blockedUntil=0;
-}
-setInterval(updateSpamTimer,1000);
-nickInput.addEventListener('input',()=>{updateSpamTimer();saveState();});
-
-/* ===== TABS ===== */
-document.querySelectorAll('.tab').forEach(tab=>{
-    tab.addEventListener('click',()=>{
-        if(tab.classList.contains('hidden'))return;
-        haptic('light');
-        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-        tab.classList.add('active');
-        $('tab-'+tab.dataset.tab).classList.add('active');
-        if(tab.dataset.tab==='adminChats'&&currentUser&&currentUser.role==='admin'){
-            Object.values(chats).forEach(c=>c.unread=0);
-            renderChatList();updateBadge();saveState();
-        }
-        if(tab.dataset.tab==='leaders') renderLeaderboard();
-    });
-});
-
-/* ===== LEADERBOARD ===== */
-function renderLeaderboard(){
-    const entries = [];
-    Object.keys(playerStats).forEach(nick=>{
-        if(nick === ADMIN_NICK) return;
-        const s = playerStats[nick];
-        if(s.won > 0) entries.push({nick, won: s.won});
-    });
-    entries.sort((a,b) => b.won - a.won);
-    const top = entries.slice(0, 20);
-    if(top.length === 0){
-        leaderboardList.innerHTML = '<div class="leader-empty">Пока никто не выиграл робуксы.<br>Стань первым!</div>';
-        return;
-    }
-    leaderboardList.innerHTML = top.map((e, i) => {
-        const rank = i + 1;
-        const cls = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
-        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
-        return `
-            <div class="leader-row ${cls}" style="animation-delay:${i*0.03}s;">
-                <div class="leader-rank">${medal || rank}</div>
-                <div class="leader-info">
-                    <div class="leader-nick">${escapeHtml(e.nick)}</div>
-                    <div class="leader-sub">${playerStats[e.nick].spins || 0} прокруток</div>
-                </div>
-                <div class="leader-amount">${e.won}<small>R$</small></div>
-            </div>
-        `;
-    }).join('');
-}
-
-/* ===== WHEEL + SLIDER ===== */
-function updateWheel(){
-    let pct=parseFloat(percentInput.value);
-    if(isNaN(pct)||pct<1)pct=1;
-    if(pct>75)pct=75;
-    percentInput.value=pct;
-    percentSlider.value=pct;
-    const winAngle=(pct/100)*360;
-    wheelSector.style.setProperty('--win-angle',winAngle+'deg');
-    const mult=100/pct;
-    const text='x'+mult.toFixed(2);
-    multiplierDisplay.textContent=text;multiplierDisplay2.textContent=text;
-    updateSliderVisual();
-    quickButtons.forEach(b=>b.classList.remove('active'));
-    quickButtons.forEach(b=>{if(Math.abs(parseFloat(b.dataset.pct)-pct)<0.01)b.classList.add('active');});
-    saveState();
-}
-function updateSliderVisual(){
-    const val=parseFloat(percentSlider.value);
-    const min=parseFloat(percentSlider.min);
-    const max=parseFloat(percentSlider.max);
-    const pct=((val-min)/(max-min))*100;
-    const trackW = sliderWrap.clientWidth - 26;
-    if(trackW > 0){
-        const px = (pct / 100) * trackW;
-        sliderFill.style.width = (13 + px) + 'px';
-        sliderThumb.style.left = (13 + px) + 'px';
-    }
-}
-percentSlider.addEventListener('input',()=>{
-    if(isSpinning)return;
-    percentInput.value=percentSlider.value;
-    updateSliderVisual();
     updateWheel();
-});
-percentInput.addEventListener('input',()=>{
-    if(isSpinning)return;
-    updateWheel();
-});
-quickButtons.forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        if(isSpinning)return;haptic('light');
-        percentInput.value=btn.dataset.pct;
-        updateWheel();
-    });
-});
-window.addEventListener('resize',updateSliderVisual);
-
-/* ===== ALL IN ===== */
-allInBtn.addEventListener('click',()=>{
-    if(isSpinning)return;
-    haptic('medium');
-    if(balance<=0){showToast('Баланс пуст','error','❌');return;}
-    betInput.value=balance;
-    saveState();
-    showToast(`Ставка: ${balance} R$`,'info','🎯');
-});
-
-/* ===== FAST SPIN ===== */
-fastSpinBtn.addEventListener('click',()=>{
-    if(isSpinning)return;
-    haptic('light');
-    fastMode=!fastMode;
-    fastSpinBtn.classList.toggle('active',fastMode);
-    showToast(fastMode?'⚡ Быстрый режим':'🐢 Обычный режим','info',fastMode?'⚡':'🐢');
-});
-
-/* ===== CONFETTI ===== */
-function launchConfetti(){
-    const colors=['#3b82f6','#60a5fa','#8b5cf6','#ffffff','#22c55e','#fbbf24'];
-    for(let i=0;i<80;i++){
-        setTimeout(()=>{
-            const c=document.createElement('div');
-            c.className='confetti';
-            c.style.left=Math.random()*100+'%';
-            c.style.background=colors[Math.floor(Math.random()*colors.length)];
-            c.style.width=(Math.random()*8+6)+'px';
-            c.style.height=(Math.random()*8+6)+'px';
-            c.style.borderRadius=Math.random()>0.5?'50%':'2px';
-            const dur=Math.random()*2+2;
-            c.style.animationDuration=dur+'s';
-            confettiContainer.appendChild(c);
-            setTimeout(()=>c.remove(),(dur+1)*1000);
-        },i*18);
-    }
+    updateSliderVisual();
 }
 
-/* ===== BALANCE ANIM ===== */
-let balanceAnimId=null;
-function animateBalance(from, to, duration){
-    if(balanceAnimId) cancelAnimationFrame(balanceAnimId);
-    const start = performance.now();
-    const diff = to - from;
-    if(diff === 0){ balanceDisplay.textContent = to; return; }
-    function tick(now){
-        const elapsed = now - start;
-        const t = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - t, 3);
-        const current = Math.round(from + diff * eased);
-        balanceDisplay.textContent = current;
-        if(t < 1){ balanceAnimId = requestAnimationFrame(tick); }
-        else { balanceDisplay.textContent = to; balanceAnimId = null; }
-    }
-    balanceAnimId = requestAnimationFrame(tick);
+$('logoutBtn').addEventListener('click', () => { localStorage.removeItem('bloxup_token'); location.reload(); });
+
+function updateWheel() {
+    let pct = parseFloat($('percentInput').value);
+    if (isNaN(pct) || pct < 1) pct = 1;
+    if (pct > 75) pct = 75;
+    $('percentInput').value = pct;
+    $('percentSlider').value = pct;
+    const winAngle = (pct / 100) * 360;
+    $('wheelSector').style.setProperty('--win-angle', winAngle + 'deg');
+    const mult = 100 / pct;
+    $('multiplierDisplay').textContent = 'x' + mult.toFixed(2);
+    $('multiplierDisplay2').textContent = 'x' + mult.toFixed(2);
+    updateSliderVisual();
+    document.querySelectorAll('.quick-btn').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.pct) - pct) < 0.01));
 }
 
-/* ===== SPIN ===== */
-spinBtn.addEventListener('click',()=>{
-    if(isSpinning)return;
-    haptic('medium');
-    const bet=parseInt(betInput.value);
-    if(!bet||bet<=0)return;
-    if(bet>balance){
-        resultDisplay.textContent='Недостаточно баланса';
-        resultDisplay.className='lose';
-        haptic('error');
-        return;
-    }
-    const pct=parseFloat(percentInput.value);
-    const mult=100/pct;
-    const winAngle=(pct/100)*360;
-    let isWin;
-    if(currentUser.role==='admin' && adminForceMode==='win') isWin=true;
-    else if(currentUser.role==='admin' && adminForceMode==='lose') isWin=false;
-    else { isWin = Math.random() < (pct / RIG_FACTOR / 100); }
+function updateSliderVisual() {
+    const val = parseFloat($('percentSlider').value);
+    const min = parseFloat($('percentSlider').min);
+    const max = parseFloat($('percentSlider').max);
+    const pct = ((val - min) / (max - min)) * 100;
+    const wrap = $('sliderWrap');
+    if (!wrap || wrap.clientWidth === 0) return;
+    const trackW = wrap.clientWidth - 26;
+    const px = (pct / 100) * trackW;
+    $('sliderFill').style.width = (13 + px) + 'px';
+    $('sliderThumb').style.left = (13 + px) + 'px';
+}
 
-    isSpinning=true;
-    spinBtn.disabled=true;fastSpinBtn.disabled=true;percentSlider.disabled=true;percentInput.disabled=true;
-    quickButtons.forEach(b=>b.disabled=true);
-    resultDisplay.className='';
-    resultDisplay.textContent='Крутится...';
-    wheelOuter.classList.add('spinning');
-    wheelOuter.classList.remove('win-glow','lose-glow');
+window.addEventListener('resize', updateSliderVisual);
+$('percentSlider').addEventListener('input', () => { $('percentInput').value = $('percentSlider').value; updateWheel(); });
+$('percentInput').addEventListener('input', () => { if (!isSpinning) updateWheel(); });
+document.querySelectorAll('.quick-btn').forEach(b => b.addEventListener('click', () => { if (!isSpinning) { $('percentInput').value = b.dataset.pct; updateWheel(); } }));
+$('allInBtn').addEventListener('click', () => { if (!isSpinning) $('betAmount').value = balance; });
 
-    const margin=Math.min(8,winAngle/3);
-    let stopAngle;
-    if(isWin) stopAngle=margin+Math.random()*Math.max(1,winAngle-margin*2);
-    else stopAngle=winAngle+margin+Math.random()*Math.max(1,360-winAngle-margin*2);
-
-    const startRotation=pointerRotation;
-    const currentNorm=((startRotation%360)+360)%360;
-    const delta=((stopAngle-currentNorm)+360)%360;
-    const totalRotation=8*360+delta;
-    const duration=fastMode?800:4500;
-    const startTime=performance.now();
-    const balanceBefore=balance;
-
-    function animate(now){
-        const elapsed=now-startTime;
-        const t=Math.min(elapsed/duration,1);
-        const eased=1-Math.pow(1-t,4);
-        const currentRotation=startRotation+totalRotation*eased;
-        pointerLine.style.transform=`rotate(${currentRotation}deg)`;
-        if(t<1){
-            requestAnimationFrame(animate);
+$('spinBtn').addEventListener('click', () => {
+    if (isSpinning) return;
+    const bet = parseInt($('betAmount').value);
+    if (!bet || bet <= 0) return showToast('Введи ставку', 'error');
+    if (bet > balance) return showToast('Недостаточно баланса', 'error');
+    const pct = parseFloat($('percentInput').value);
+    const mult = 100 / pct;
+    const winAngle = (pct / 100) * 360;
+    const isWin = Math.random() < (pct / 1.5 / 100);
+    isSpinning = true; $('spinBtn').disabled = true; $('resultDisplay').textContent = 'Крутится...';
+    const duration = 4000; const startTime = performance.now(); const startRotation = pointerRotation;
+    const targetAngle = isWin ? Math.random() * (winAngle - 10) : winAngle + 10 + Math.random() * (360 - winAngle - 20);
+    const delta = (targetAngle - (startRotation % 360) + 360) % 360; const totalRotation = 8 * 360 + delta;
+    function animate(now) {
+        const t = Math.min((now - startTime) / duration, 1); const eased = 1 - Math.pow(1 - t, 4);
+        $('pointerLine').style.transform = `rotate(${startRotation + totalRotation * eased}deg)`;
+        if (t < 1) return requestAnimationFrame(animate);
+        pointerRotation = (startRotation + totalRotation) % 360;
+        const actuallyWon = pointerRotation <= winAngle;
+        if (actuallyWon) {
+            const win = Math.round(bet * mult); balance = balance - bet + win;
+            $('resultDisplay').textContent = `✅ ПОБЕДА! x${mult.toFixed(2)} → +${win} R$`; $('resultDisplay').className = 'win';
         } else {
-            pointerRotation=startRotation+totalRotation;
-            const finalNorm=((pointerRotation%360)+360)%360;
-            const actuallyWon=finalNorm<=winAngle;
-            wheelOuter.classList.remove('spinning');
-
-            if(currentUser.role !== 'admin'){
-                const stat = getPlayerStat(currentUser.nick);
-                stat.spins = (stat.spins || 0) + 1;
-                if(actuallyWon){ stat.won = (stat.won || 0) + Math.round(bet*mult); }
-                else { stat.lost = (stat.lost || 0) + bet; }
-                savePlayerStats();
-            }
-
-            if(actuallyWon){
-                const win=Math.round(bet*mult);
-                balance=balance-bet+win;
-                resultDisplay.textContent=`✅ ПОБЕДА! x${mult.toFixed(2)} → +${win} R$`;
-                resultDisplay.className='win';
-                wheelOuter.classList.add('win-glow');
-                launchConfetti();playWinSound();haptic('success');
-                balanceDisplay.classList.add('bump');
-                setTimeout(()=>balanceDisplay.classList.remove('bump'),400);
-            } else {
-                balance=balance-bet;
-                resultDisplay.textContent=`❌ ПРОИГРЫШ. Ставка ${bet} R$ сгорела`;
-                resultDisplay.className='lose';
-                wheelOuter.classList.add('lose-glow');
-                playLoseSound();haptic('error');
-            }
-            const change = Math.abs(balance - balanceBefore);
-            animateBalance(balanceBefore, balance, Math.min(1800, 500 + change * 3));
-            renderLeaderboard();
-            isSpinning=false;
-            spinBtn.disabled=false;fastSpinBtn.disabled=false;percentSlider.disabled=false;percentInput.disabled=false;
-            quickButtons.forEach(b=>b.disabled=false);
-            saveState();
+            balance -= bet; $('resultDisplay').textContent = `❌ ПРОИГРЫШ. -${bet} R$`; $('resultDisplay').className = 'lose';
         }
+        $('balanceDisplay').textContent = balance;
+        if (currentUser.role !== 'admin') socket.emit('saveStats', { won: actuallyWon ? Math.round(bet * mult) : 0, lost: actuallyWon ? 0 : bet, spins: 1 });
+        isSpinning = false; $('spinBtn').disabled = false;
     }
     requestAnimationFrame(animate);
 });
 
-/* ===== CHAT HELPERS ===== */
-function escapeHtml(text){const d=document.createElement('div');d.textContent=text;return d.innerHTML;}
-function createChat(nick,amount,type){
-    chatIdCounter++;
-    const id='chat_'+chatIdCounter+'_'+Date.now();
-    chats[id]={id,nick,amount,type:type||'deposit',status:'pending',messages:[],unread:0,lastMsg:'',ts:Date.now()};
-    return chats[id];
-}
-function addToChat(chatId,text,from,senderName){
-    const chat=chats[chatId];if(!chat)return;
-    chat.messages.push({text,from,senderName,ts:Date.now()});
-    if(from!=='system'&&from!=='success'&&from!=='danger')chat.lastMsg=text;
-    chat.ts=Date.now();
-    if(from!=='system'&&from!=='success'&&from!=='danger'){
-        if(activeAdminChatId!==chatId)chat.unread=(chat.unread||0)+1;
-    }
-    if(currentPlayerChatId===chatId)renderPlayerChat();
-    if(currentWithdrawChatId===chatId)renderWithdrawChat();
-    if(currentTaskChatId===chatId)renderTaskChat();
-    if(activeAdminChatId===chatId)renderAdminChat();
-    renderChatList();updateBadge();saveState();
-}
-function updateBadge(){
-    if(!currentUser||currentUser.role!=='admin')return;
-    const totalUnread=Object.values(chats).reduce((s,c)=>s+(c.unread||0),0);
-    if(totalUnread>0){chatsBadge.textContent=totalUnread>99?'99+':totalUnread;chatsBadge.classList.add('show');}
-    else chatsBadge.classList.remove('show');
-}
-function statusLabel(status){return{pending:'Ожидает',accepted:'Начислено',rejected:'Отклонена',paid:'Оплачено'}[status]||'';}
+$('sendRequestBtn').addEventListener('click', () => {
+    const nick = $('nickInput').value.trim();
+    const amount = parseInt($('amountInput').value);
+    if (!nick || isNaN(amount) || amount <= 0) return showToast('Заполни ник и сумму', 'error');
+    if (!socket) return showToast('Нет соединения с сервером. Обновите страницу.', 'error');
+    socket.emit('createChat', { amount, type: 'deposit', firstMessage: `Хочу пополнить ${amount} R$. Мой ник: ${nick}` }, ({ chatId }) => {
+        if (!chatId) return showToast('Ошибка на сервере', 'error');
+        currentPlayerChatId = chatId;
+        $('playerChatWindow').style.display = 'block';
+        $('playerChatWith').textContent = nick;
+        socket.emit('openChat', chatId);
+        showToast('Заявка создана', 'success');
+    });
+});
+$('playerSendBtn').addEventListener('click', () => {
+    const text = $('playerMessageInput').value.trim();
+    if (!text || !currentPlayerChatId) return;
+    socket.emit('sendMessage', { chatId: currentPlayerChatId, text });
+    $('playerMessageInput').value = '';
+});
+$('playerMessageInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('playerSendBtn').click(); });
 
-function renderPlayerChat(){
-    if(!currentPlayerChatId)return;
-    const chat=chats[currentPlayerChatId];if(!chat)return;
-    playerChatLog.innerHTML='';
-    chat.messages.forEach(m=>{
-        const el=document.createElement('div');
-        if(m.from==='player'){el.className='msg player';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">${escapeHtml(m.senderName)}</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='admin'){el.className='msg admin';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">Админ</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='success'){el.className='msg success';el.textContent=m.text;}
-        else if(m.from==='danger'){el.className='msg danger';el.textContent=m.text;}
-        else{el.className='msg system';el.textContent=m.text;}
-        playerChatLog.appendChild(el);
-    });
-    playerChatLog.scrollTop=playerChatLog.scrollHeight;
+function renderPlayerChat() {
+    if (!currentPlayerChatId) return;
+    const msgs = chatHistoryCache[currentPlayerChatId] || [];
+    $('playerChatLog').innerHTML = msgs.map(m => {
+        if (m.sender_role === 'player') return `<div class="msg player"><strong>${escapeHtml(m.sender)}</strong><br>${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'admin') return `<div class="msg admin"><strong>Админ</strong><br>${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'system') return `<div class="msg system">${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'success') return `<div class="msg success">${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'danger') return `<div class="msg danger">${escapeHtml(m.text)}</div>`;
+        return '';
+    }).join('');
+    $('playerChatLog').scrollTop = $('playerChatLog').scrollHeight;
 }
-function renderWithdrawChat(){
-    if(!currentWithdrawChatId)return;
-    const chat=chats[currentWithdrawChatId];if(!chat)return;
-    withdrawChatLog.innerHTML='';
-    chat.messages.forEach(m=>{
-        const el=document.createElement('div');
-        if(m.from==='player'){el.className='msg player';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">${escapeHtml(m.senderName)}</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='admin'){el.className='msg admin';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">Админ</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='success'){el.className='msg success';el.textContent=m.text;}
-        else if(m.from==='danger'){el.className='msg danger';el.textContent=m.text;}
-        else{el.className='msg system';el.textContent=m.text;}
-        withdrawChatLog.appendChild(el);
+
+$('sendWithdrawBtn').addEventListener('click', () => {
+    const nick = $('withdrawNick').value.trim();
+    const amount = parseInt($('withdrawAmount').value);
+    if (!nick || amount <= 0) return showToast('Заполни ник и сумму', 'error');
+    if (amount > balance) return showToast('Недостаточно баланса', 'error');
+    if (!socket) return showToast('Нет соединения', 'error');
+    socket.emit('createChat', { amount, type: 'withdraw', firstMessage: `Хочу вывести ${amount} R$ на ник ${nick}` }, ({ chatId }) => {
+        currentWithdrawChatId = chatId;
+        $('withdrawChatWindow').style.display = 'block';
+        $('withdrawChatWith').textContent = nick;
+        socket.emit('openChat', chatId);
+        showToast('Заявка создана', 'success');
     });
-    withdrawChatLog.scrollTop=withdrawChatLog.scrollHeight;
+});
+$('withdrawSendBtn').addEventListener('click', () => {
+    const text = $('withdrawMessageInput').value.trim();
+    if (!text || !currentWithdrawChatId) return;
+    socket.emit('sendMessage', { chatId: currentWithdrawChatId, text });
+    $('withdrawMessageInput').value = '';
+});
+
+function renderWithdrawChat() {
+    if (!currentWithdrawChatId) return;
+    const msgs = chatHistoryCache[currentWithdrawChatId] || [];
+    $('withdrawChatLog').innerHTML = msgs.map(m => {
+        if (m.sender_role === 'player') return `<div class="msg player"><strong>${escapeHtml(m.sender)}</strong><br>${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'admin') return `<div class="msg admin"><strong>Админ</strong><br>${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'system') return `<div class="msg system">${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'success') return `<div class="msg success">${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'danger') return `<div class="msg danger">${escapeHtml(m.text)}</div>`;
+        return '';
+    }).join('');
+    $('withdrawChatLog').scrollTop = $('withdrawChatLog').scrollHeight;
 }
-function renderTaskChat(){
-    if(!currentTaskChatId)return;
-    const chat=chats[currentTaskChatId];if(!chat)return;
-    taskChatLog.innerHTML='';
-    chat.messages.forEach(m=>{
-        const el=document.createElement('div');
-        if(m.from==='player'){el.className='msg player';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">${escapeHtml(m.senderName)}</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='admin'){el.className='msg admin';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">Админ</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='success'){el.className='msg success';el.textContent=m.text;}
-        else if(m.from==='danger'){el.className='msg danger';el.textContent=m.text;}
-        else{el.className='msg system';el.textContent=m.text;}
-        taskChatLog.appendChild(el);
-    });
-    taskChatLog.scrollTop=taskChatLog.scrollHeight;
-}
-function renderChatList(){
-    if(!currentUser||currentUser.role!=='admin')return;
-    const ids=Object.keys(chats);
-    chatCount.textContent='('+ids.length+')';
-    if(ids.length===0){adminChatList.innerHTML='<p style="color:var(--muted);font-size:11px;padding:8px;text-align:center;">Нет чатов</p>';return;}
-    ids.sort((a,b)=>{
-        const ca=chats[a],cb=chats[b];
-        const pa=ca.status==='pending'?1:0,pb=cb.status==='pending'?1:0;
-        if(pb!==pa)return pb-pa;
-        return cb.ts-ca.ts;
-    });
-    adminChatList.innerHTML='';
-    ids.forEach(id=>{
-        const chat=chats[id];
-        const item=document.createElement('div');
-        item.className='chat-list-item';
-        if(activeAdminChatId===id)item.classList.add('active');
-        if(chat.unread>0)item.classList.add('unread');
-        const typeIcon=chat.type==='withdraw'?'💸 ':chat.type==='task'?'🎯 ':'💳 ';
-        item.innerHTML=`
+
+function renderChatList() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    const ids = Object.keys(chatsCache);
+    $('chatCount').textContent = '(' + ids.length + ')';
+    if (ids.length === 0) { $('adminChatList').innerHTML = '<p style="color:var(--muted);font-size:11px;padding:8px;text-align:center;">Нет чатов</p>'; return; }
+    ids.sort((a, b) => chatsCache[b].updated_at - chatsCache[a].updated_at);
+    $('adminChatList').innerHTML = ids.map(id => {
+        const c = chatsCache[id];
+        const unreadClass = c.unread > 0 ? 'unread' : '';
+        const activeClass = activeAdminChatId === id ? 'active' : '';
+        const statusMap = { pending: 'Ожидает', accepted: 'Начислено', rejected: 'Отклонена', paid: 'Оплачено' };
+        return `<div class="chat-list-item ${unreadClass} ${activeClass}" onclick="openAdminChat('${id}')">
             <div class="unread-dot"></div>
-            <div class="nick">${typeIcon}${escapeHtml(chat.nick)}</div>
-            <div class="last-msg">${escapeHtml(chat.lastMsg||'Нет сообщений')}</div>
-            <div class="status-tag status-${chat.status}">${statusLabel(chat.status)}</div>
-        `;
-        item.addEventListener('click',()=>openAdminChat(id));
-        adminChatList.appendChild(item);
-    });
-}
-function openAdminChat(id){
-    activeAdminChatId=id;
-    const chat=chats[id];if(chat)chat.unread=0;
-    adminChatHeader.style.display='flex';
-    adminChatNick.textContent=chat.nick;
-    adminChatEmpty.style.display='none';
-    adminChatLog.style.display='flex';
-    adminInputRow.style.display='flex';
-    if(chat.status==='pending'){
-        adminActionBar.style.display='flex';
-        adminCreditBtn.disabled=false;adminRejectBtn.disabled=false;
-        if(chat.type==='withdraw') adminCreditBtn.textContent=`💰 Оплатил ${chat.amount} R$`;
-        else adminCreditBtn.textContent=`💰 Начислить ${chat.amount} R$`;
-    } else adminActionBar.style.display='none';
-    renderAdminChat();renderChatList();updateBadge();saveState();
-}
-function renderAdminChat(){
-    if(!activeAdminChatId)return;
-    const chat=chats[activeAdminChatId];if(!chat)return;
-    adminChatLog.innerHTML='';
-    chat.messages.forEach(m=>{
-        const el=document.createElement('div');
-        if(m.from==='player'){el.className='msg player';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">${escapeHtml(m.senderName)}</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='admin'){el.className='msg admin';el.innerHTML=`<strong style="opacity:0.7;font-size:10px;display:block;margin-bottom:3px;">Админ</strong>${escapeHtml(m.text)}`;}
-        else if(m.from==='success'){el.className='msg success';el.textContent=m.text;}
-        else if(m.from==='danger'){el.className='msg danger';el.textContent=m.text;}
-        else{el.className='msg system';el.textContent=m.text;}
-        adminChatLog.appendChild(el);
-    });
-    adminChatLog.scrollTop=adminChatLog.scrollHeight;
+            <div class="nick">${escapeHtml(c.nick)}</div>
+            <div class="last">${escapeHtml(c.type === 'deposit' ? '💳 Пополнение' : c.type === 'withdraw' ? '💸 Вывод' : '🎯 Задание')}</div>
+            <div class="status-tag status-${c.status}">${statusMap[c.status]}</div>
+        </div>`;
+    }).join('');
 }
 
-/* ===== SEND MESSAGES ===== */
-function sendPlayerMessage(){
-    const text=playerMessageInput.value.trim();
-    if(!text||!currentPlayerChatId)return;
-    haptic('light');
-    addToChat(currentPlayerChatId,text,'player',chats[currentPlayerChatId].nick);
-    playerMessageInput.value='';
-    playNewOrderSound();
+function openAdminChat(id) {
+    activeAdminChatId = id;
+    $('adminChatHeader').style.display = 'flex';
+    $('adminChatNick').textContent = chatsCache[id].nick;
+    $('adminChatEmpty').style.display = 'none';
+    $('adminChatLog').style.display = 'flex';
+    $('adminInputRow').style.display = 'flex';
+    if (chatsCache[id].status === 'pending') {
+        $('adminActionBar').style.display = 'flex';
+        $('adminCreditBtn').textContent = '💰 Начислить ' + chatsCache[id].amount + ' R$';
+    } else { $('adminActionBar').style.display = 'none'; }
+    socket.emit('openChat', id);
+    renderChatList();
 }
-function sendWithdrawMessage(){
-    const text=withdrawMessageInput.value.trim();
-    if(!text||!currentWithdrawChatId)return;
-    haptic('light');
-    addToChat(currentWithdrawChatId,text,'player',chats[currentWithdrawChatId].nick);
-    withdrawMessageInput.value='';
-    playNewOrderSound();
-}
-function sendTaskMessage(){
-    const text=taskMessageInput.value.trim();
-    if(!text||!currentTaskChatId)return;
-    haptic('light');
-    addToChat(currentTaskChatId,text,'player',chats[currentTaskChatId].nick);
-    taskMessageInput.value='';
-    playNewOrderSound();
-}
-function sendAdminMessage(){
-    const text=adminMessageInput.value.trim();
-    if(!text||!activeAdminChatId)return;
-    haptic('light');
-    addToChat(activeAdminChatId,text,'admin','Админ');
-    adminMessageInput.value='';
-}
-playerSendBtn.addEventListener('click',sendPlayerMessage);
-playerMessageInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendPlayerMessage();}});
-withdrawSendBtn.addEventListener('click',sendWithdrawMessage);
-withdrawMessageInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendWithdrawMessage();}});
-taskSendBtn.addEventListener('click',sendTaskMessage);
-taskMessageInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendTaskMessage();}});
-adminSendBtn.addEventListener('click',sendAdminMessage);
-adminMessageInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendAdminMessage();}});
 
-/* ===== DEPOSIT ===== */
-sendRequestBtn.addEventListener('click',()=>{
-    if(!currentUser)return;
-    haptic('medium');
-    const nick=nickInput.value.trim();
-    const amount=parseInt(amountInput.value);
-    if(!nick){showModal('Ошибка','Впиши ник, с которого хочешь пополнить!','⚠️');return;}
-    if(!amount||amount<=0){showModal('Ошибка','Введи сумму пополнения!','⚠️');return;}
-    const spam=checkSpam(nick);
-    if(!spam.ok){
-        showModal('Спам заблокирован',`Нельзя отправлять заявки с ника ${nick}. Подожди ${formatTime(spam.remaining)}.`,'⏳');
-        updateSpamTimer();haptic('error');return;
-    }
-    recordRequest(nick);
-    const chat=createChat(nick,amount,'deposit');
-    currentPlayerChatId=chat.id;
-    playerChatWindow.style.display='block';
-    playerChatWith.textContent=nick+' • #'+chat.id.split('_')[1];
-    addToChat(chat.id,`Хочу пополнить ${amount} R$. Ник, с которого перевожу: ${nick}`,'player',nick);
-    addToChat(chat.id,`Покупай геймпасс на ${amount} R$ и скидывай свой ник. После оплаты напиши "Оплатил".`,'admin','Админ');
-    addToChat(chat.id,`Если перевёл — админ проверит транзакцию и начислит баланс вручную.`,'system');
-    renderPlayerChat();renderChatList();updateSpamTimer();
-    playNewOrderSound();haptic('warning');
-    amountInput.value=100;
-    playerChatWindow.scrollIntoView({behavior:'smooth',block:'nearest'});
-    showToast(`Заявка создана. Жди ответа админа.`,'success','📨');
+function renderAdminChat() {
+    if (!activeAdminChatId) return;
+    const msgs = chatHistoryCache[activeAdminChatId] || [];
+    $('adminChatLog').innerHTML = msgs.map(m => {
+        if (m.sender_role === 'player') return `<div class="msg player"><strong>${escapeHtml(m.sender)}</strong><br>${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'admin') return `<div class="msg admin"><strong>Админ</strong><br>${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'system') return `<div class="msg system">${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'success') return `<div class="msg success">${escapeHtml(m.text)}</div>`;
+        if (m.sender_role === 'danger') return `<div class="msg danger">${escapeHtml(m.text)}</div>`;
+        return '';
+    }).join('');
+    $('adminChatLog').scrollTop = $('adminChatLog').scrollHeight;
+}
+
+$('adminSendBtn').addEventListener('click', () => {
+    const text = $('adminMessageInput').value.trim();
+    if (!text || !activeAdminChatId) return;
+    socket.emit('sendMessage', { chatId: activeAdminChatId, text });
+    $('adminMessageInput').value = '';
 });
 
-/* ===== WITHDRAW ===== */
-sendWithdrawBtn.addEventListener('click',()=>{
-    if(!currentUser)return;
-    haptic('medium');
-    const nick=withdrawNick.value.trim();
-    const amount=parseInt(withdrawAmount.value);
-    if(!nick){showModal('Ошибка','Введи свой ник!','⚠️');return;}
-    if(!amount||amount<=0){showModal('Ошибка','Введи сумму вывода!','⚠️');return;}
-    if(amount>balance){showModal('Ошибка','Недостаточно баланса для вывода!','⚠️');return;}
-    const chat=createChat(nick,amount,'withdraw');
-    currentWithdrawChatId=chat.id;
-    withdrawChatWindow.style.display='block';
-    withdrawChatWith.textContent=nick+' • #'+chat.id.split('_')[1];
-    addToChat(chat.id,`Хочу вывести ${amount} R$ на ник ${nick}`,'player',nick);
-    addToChat(chat.id,`Скиньте геймпасс на сумму вывода и мы оплатим его в течение 7 дней. Комиссия на вас.`,'admin','Админ');
-    addToChat(chat.id,`Статус: ожидает обработки.`,'system');
-    renderWithdrawChat();renderChatList();
-    playNewOrderSound();haptic('warning');
-    withdrawChatWindow.scrollIntoView({behavior:'smooth',block:'nearest'});
-    showToast(`Заявка на вывод создана.`,'success','💸');
+$('adminCreditBtn').addEventListener('click', () => {
+    if (!activeAdminChatId) return;
+    const action = chatsCache[activeAdminChatId].type === 'withdraw' ? 'payout' : 'credit';
+    socket.emit('adminAction', { chatId: activeAdminChatId, action });
+    showToast('Выполнено', 'success');
+});
+$('adminRejectBtn').addEventListener('click', () => {
+    if (!activeAdminChatId) return;
+    socket.emit('adminAction', { chatId: activeAdminChatId, action: 'reject' });
+    showToast('Отклонено', 'warn');
 });
 
-/* ===== TASKS ===== */
-document.querySelectorAll('.task-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        if(!currentUser)return;
-        haptic('medium');
-        const task=btn.dataset.task;
-        const reward=parseInt(btn.dataset.reward);
-        const chat=createChat(currentUser.nick,reward,'task');
-        currentTaskChatId=chat.id;
-        taskChatWindow.style.display='block';
-        taskChatWith.textContent=currentUser.nick+' • #'+chat.id.split('_')[1];
-        addToChat(chat.id,`Выполнил задание: ${task}. Награда: ${reward} R$. Результат скину сюда.`,'player',currentUser.nick);
-        addToChat(chat.id,`Скинь скриншоты или ссылки на выполнение задания. Админ проверит и начислит ${reward} R$.`,'admin','Админ');
-        renderTaskChat();renderChatList();
-        playNewOrderSound();haptic('warning');
-        taskChatWindow.scrollIntoView({behavior:'smooth',block:'nearest'});
-        showToast(`Задание принято. Скинь результат в чат.`,'success','🎯');
-        btn.classList.add('completed');
-        btn.textContent='✓ Задание отправлено';
-        btn.disabled=true;
+function updateBadge() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    const totalUnread = Object.values(chatsCache).reduce((s, c) => s + (c.unread || 0), 0);
+    if (totalUnread > 0) { $('chatsBadge').textContent = totalUnread > 99 ? '99+' : totalUnread; $('chatsBadge').classList.add('show'); }
+    else { $('chatsBadge').classList.remove('show'); }
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        if (tab.classList.contains('hidden')) return;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        $('tab-' + tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'leaders') loadLeaderboard();
+        if (tab.dataset.tab === 'adminChats' && currentUser && currentUser.role === 'admin') {
+            Object.values(chatsCache).forEach(c => c.unread = 0);
+            renderChatList(); updateBadge();
+        }
     });
 });
 
-/* ===== ADMIN ACTIONS ===== */
-adminCreditBtn.addEventListener('click',()=>{
-    if(!activeAdminChatId)return;
-    const chat=chats[activeAdminChatId];
-    if(!chat||chat.status!=='pending')return;
-    if(chat.type==='withdraw'){
-        showModal('Оплатить вывод?',`Отметить, что геймпасс на ${chat.amount} R$ оплачен игроку ${chat.nick}?`,'💸',[
-            {label:'Отмена',secondary:true},
-            {label:'💸 Оплатил',onClick:()=>doPayout(chat)}
-        ]);
-    }else{
-        showModal('Начислить баланс?',`Зачислить ${chat.amount} R$ игроку ${chat.nick}?`,'💰',[
-            {label:'Отмена',secondary:true},
-            {label:'💰 Начислить',onClick:()=>doCredit(chat)}
-        ]);
-    }
-});
-function doCredit(chat){
-    haptic('success');playAcceptSound();
-    chat.status='accepted';
-    const before = balance;
-    balance+=chat.amount;
-    animateBalance(before, balance, Math.min(1800, 500 + chat.amount * 3));
-    balanceDisplay.classList.add('bump');
-    setTimeout(()=>balanceDisplay.classList.remove('bump'),400);
-    addToChat(chat.id,`✅ Админ проверил транзакцию. Начислено ${chat.amount} R$.`,'success');
-    addToChat(chat.id,`Статус: начислено.`,'system');
-    adminActionBar.style.display='none';
-    if(currentPlayerChatId===chat.id){renderPlayerChat();showToast(`✅ Начислено ${chat.amount} R$`,'success','✅');}
-    if(currentTaskChatId===chat.id){renderTaskChat();showToast(`✅ Начислено ${chat.amount} R$`,'success','✅');}
-    renderChatList();updateBadge();saveState();
-}
-function doPayout(chat){
-    haptic('success');playAcceptSound();
-    chat.status='paid';
-    addToChat(chat.id,`✅ Админ оплатил ваш геймпасс на ${chat.amount} R$. Вывод выполнен.`,'success');
-    addToChat(chat.id,`Статус: оплачено.`,'system');
-    adminActionBar.style.display='none';
-    if(currentWithdrawChatId===chat.id){renderWithdrawChat();showToast(`✅ Вывод оплачен`,'success','💸');}
-    renderChatList();updateBadge();saveState();
-}
-adminRejectBtn.addEventListener('click',()=>{
-    if(!activeAdminChatId)return;
-    const chat=chats[activeAdminChatId];
-    if(!chat||chat.status!=='pending')return;
-    showModal('Отклонить заявку?',`Отклонить заявку игрока ${chat.nick} на ${chat.amount} R$?`,'⚠️',[
-        {label:'Отмена',secondary:true},
-        {label:'✕ Отклонить',onClick:()=>doReject(chat)}
-    ]);
-});
-function doReject(chat){
-    haptic('warning');
-    chat.status='rejected';
-    addToChat(chat.id,`❌ Админ отклонил заявку.`,'danger');
-    addToChat(chat.id,`Статус: отклонена.`,'system');
-    adminActionBar.style.display='none';
-    if(currentPlayerChatId===chat.id){renderPlayerChat();showToast(`Заявка отклонена.`,'error','❌');}
-    if(currentWithdrawChatId===chat.id){renderWithdrawChat();showToast(`Заявка отклонена.`,'error','❌');}
-    if(currentTaskChatId===chat.id){renderTaskChat();showToast(`Заявка отклонена.`,'error','❌');}
-    renderChatList();updateBadge();saveState();
+async function loadLeaderboard() {
+    try {
+        const r = await fetch('/api/leaderboard');
+        const list = await r.json();
+        if (!list.length) { $('leaderboardList').innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px 20px">Пока пусто</p>'; return; }
+        $('leaderboardList').innerHTML = list.map((e, i) => {
+            const rank = i + 1;
+            const cls = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+            return `<div class="leader-row ${cls}"><div class="leader-rank">${medal}</div><div class="leader-info"><div class="leader-nick">${escapeHtml(e.nick)}</div><div class="leader-sub">${e.spins} прокруток</div></div><div class="leader-amount">${e.won}<small>R$</small></div></div>`;
+        }).join('');
+    } catch (e) { console.error(e); }
 }
 
-/* ===== ADMIN PANEL ===== */
-adminPanelBtn.addEventListener('click',(e)=>{e.stopPropagation();haptic('medium');openAdminPanel();});
-function openAdminPanel(){
-    const overlay=document.createElement('div');
-    overlay.className='admin-panel-overlay';
-    overlay.innerHTML=`
-        <div class="admin-panel">
-            <h2>⚙ АДМИН ПАНЕЛЬ</h2>
-            <div class="admin-section">
-                <h3>Начислить робуксы</h3>
-                <div class="form-field"><label>Ник игрока</label><input type="text" id="apCreditNick" placeholder="Ник" maxlength="20"></div>
-                <div class="form-field"><label>Сумма (R$)</label><input type="number" id="apCreditAmount" value="100" min="1"></div>
-                <button class="btn-primary" id="apCreditBtn" style="background:linear-gradient(135deg,var(--green),#16a34a);">💰 Начислить</button>
-            </div>
-            <div class="admin-section">
-                <h3>Списать робуксы</h3>
-                <div class="form-field"><label>Ник игрока</label><input type="text" id="apDebitNick" placeholder="Ник" maxlength="20"></div>
-                <div class="form-field"><label>Сумма (R$)</label><input type="number" id="apDebitAmount" value="100" min="1"></div>
-                <button class="btn-primary" id="apDebitBtn" style="background:linear-gradient(135deg,var(--red),#b91c1c);">💸 Списать</button>
-            </div>
-            <div class="admin-section">
-                <h3>Режим улучшения (для админа)</h3>
-                <div class="force-win-row">
-                    <button data-mode="random" class="${adminForceMode==='random'?'active':''}">🎲 Рандом</button>
-                    <button data-mode="win" class="${adminForceMode==='win'?'active':''}">✅ Всё залетает</button>
-                    <button data-mode="lose" class="${adminForceMode==='lose'?'active':''}">❌ Ничего не залетает</button>
-                </div>
-            </div>
-            <button class="close-btn" id="apCloseBtn">Закрыть</button>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    const close=()=>overlay.remove();
-    overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
-    overlay.querySelector('#apCloseBtn').addEventListener('click',close);
-    overlay.querySelectorAll('.force-win-row button').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-            adminForceMode=btn.dataset.mode;
-            overlay.querySelectorAll('.force-win-row button').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            haptic('light');
-            showToast(`Режим: ${btn.textContent}`,'info','⚙');
-        });
-    });
-    overlay.querySelector('#apCreditBtn').addEventListener('click',()=>{
-        const nick=overlay.querySelector('#apCreditNick').value.trim();
-        const amt=parseInt(overlay.querySelector('#apCreditAmount').value);
-        if(!nick){showToast('Введи ник','error');return;}
-        if(!amt||amt<=0){showToast('Введи сумму','error');return;}
-        const before = balance;
-        balance += amt;
-        animateBalance(before, balance, Math.min(1800, 500 + amt * 3));
-        balanceDisplay.classList.add('bump');
-        setTimeout(()=>balanceDisplay.classList.remove('bump'),400);
-        playAcceptSound();haptic('success');
-        showToast(`✅ Начислено ${amt} R$ игроку ${nick}`,'success','✅');
-        overlay.querySelector('#apCreditNick').value='';
-        saveState();
-    });
-    overlay.querySelector('#apDebitBtn').addEventListener('click',()=>{
-        const nick=overlay.querySelector('#apDebitNick').value.trim();
-        const amt=parseInt(overlay.querySelector('#apDebitAmount').value);
-        if(!nick){showToast('Введи ник','error');return;}
-        if(!amt||amt<=0){showToast('Введи сумму','error');return;}
-        if(amt>balance){showToast('Недостаточно баланса','error');return;}
-        const before = balance;
-        balance -= amt;
-        animateBalance(before, balance, Math.min(1800, 500 + amt * 3));
-        haptic('warning');
-        showToast(`💸 Списано ${amt} R$ у ${nick}`,'warn','💸');
-        overlay.querySelector('#apDebitNick').value='';
-        saveState();
-    });
-}
-
-/* ===== APPLY LOADED STATE ===== */
-function applyLoadedState(s){
-    if(!s) return;
-    if(s.users) Object.keys(s.users).forEach(k=>{users[k]=s.users[k];});
-    if(s.chats) Object.keys(s.chats).forEach(k=>{chats[k]=s.chats[k];});
-    if(s.spamTracker) Object.keys(s.spamTracker).forEach(k=>{spamTracker[k]=s.spamTracker[k];});
-    if(typeof s.balance==='number') balance=s.balance;
-    if(typeof s.chatIdCounter==='number') chatIdCounter=s.chatIdCounter;
-    if(typeof s.selectedPercent==='number'){percentInput.value=s.selectedPercent;percentSlider.value=s.selectedPercent;}
-    if(typeof s.currentBet==='number') betInput.value=s.currentBet;
-    if(typeof s.lastNick==='string') nickInput.value=s.lastNick;
-    if(typeof s.lastWithdrawNick==='string') withdrawNick.value=s.lastWithdrawNick;
-    if(s.currentUser) setTimeout(()=>loginUser(s.currentUser.nick,s.currentUser.role,true),300);
-}
-
-/* ===== INIT ===== */
-const savedState = loadState();
-applyLoadedState(savedState);
-updateWheel();
-updateSliderVisual();
-setTimeout(updateSliderVisual,100);
-setTimeout(updateSliderVisual,500);
-
-// Если не было сессии — баланс для нового игрока
-if(!savedState || !savedState.currentUser){
-    // баланс 0 по умолчанию
-}
-
-// Сохраняем вводы
-withdrawNick.addEventListener('input', saveState);
-betInput.addEventListener('input', saveState);
+tryRestore();
 </script>
 </body>
 </html>
