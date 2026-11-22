@@ -113,4 +113,403 @@ h2 { margin: 0 0 16px; font-size: 22px; text-align: center; letter-spacing: 2px;
 .leader-nick { font-weight: 800; font-size: 14px; }
 .leader-amount { font-weight: 900; font-size: 16px; color: var(--blue-bright); }
 .leader-row.top1 .leader-amount { color: var(--gold); }
-.admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 15000; display: flex; align-items: center; justify-content: center
+.admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 15000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.admin-panel { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 18px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; padding: 20px; }
+.admin-panel h2 { font-size: 18px; margin-bottom: 16px; }
+.admin-section { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.admin-section h3 { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.admin-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.admin-row input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-0); color: var(--text); }
+.admin-row button { padding: 0 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; color: #fff; }
+.btn-green { background: var(--green); }
+.btn-red { background: var(--red); }
+.btn-blue { background: var(--blue); }
+.admin-toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-0); border-radius: 8px; margin-bottom: 8px; }
+.admin-toggle { width: 44px; height: 24px; background: var(--bg-3); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s; }
+.admin-toggle.on { background: var(--green); }
+.admin-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: transform 0.3s; }
+.admin-toggle.on::after { transform: translateX(20px); }
+.user-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-0); border-radius: 8px; margin-bottom: 6px; }
+.user-actions button { width: 30px; height: 30px; border-radius: 6px; border: none; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="toastContainer"></div>
+<div id="authScreen">
+    <div class="auth-box">
+        <div class="auth-logo">BloxUp</div>
+        <div class="auth-tabs" id="authTabs">
+            <div class="auth-tab active" data-auth="login">Вход</div>
+            <div class="auth-tab" data-auth="register">Регистрация</div>
+        </div>
+        <div class="auth-field"><label>Ник</label><input type="text" id="authNick" placeholder="Введи ник" maxlength="20"></div>
+        <div class="auth-field"><label>Пароль</label><input type="password" id="authPassword" placeholder="Введи пароль" maxlength="30"></div>
+        <button class="auth-btn" id="authBtn">Войти</button>
+        <div class="auth-error" id="authError"></div>
+    </div>
+</div>
+<div id="mainApp">
+    <div class="top-bar">
+        <div>Баланс: <b id="balanceDisplay">0</b> R$</div>
+        <div class="user-info">
+            <span class="user-badge" id="userBadge" style="display:none;"></span>
+            <span id="userNickDisplay" style="color:var(--text-dim);"></span>
+            <button class="logout-btn" id="adminPanelBtn" style="display:none;background:var(--green);border-color:var(--green);color:#fff;margin-right:6px;">⚙ Админка</button>
+            <button class="logout-btn" id="logoutBtn">Выйти</button>
+        </div>
+    </div>
+    <div class="tabs">
+        <div class="tab active" data-tab="upgrader">🎰 Улучшить</div>
+        <div class="tab" data-tab="chat">💳 Пополнение</div>
+        <div class="tab" data-tab="withdraw">💸 Вывод</div>
+        <div class="tab" data-tab="leaders">🏆 Лидеры</div>
+        <div class="tab hidden" data-tab="adminChats" id="adminTab">👑 Чаты <span class="badge" id="chatsBadge">0</span></div>
+    </div>
+    <div class="tab-content active" id="tab-upgrader">
+        <h2>УЛУЧШИТЬ</h2>
+        <div class="wheel-outer" id="wheelOuter">
+            <div class="wheel-ring"></div>
+            <div class="wheel-sector" id="wheelSector"></div>
+            <div class="pointer-line" id="pointerLine" style="transform: rotate(0deg);"></div>
+            <div class="wheel-center-circle"><div class="mult" id="multiplierDisplay">x2.00</div><div class="chance-label">МНОЖИТЕЛЬ</div></div>
+        </div>
+        <div class="quick-chances" id="quickChances">
+            <button class="quick-btn" data-pct="50">x2<small>50%</small></button>
+            <button class="quick-btn" data-pct="25">x4<small>25%</small></button>
+            <button class="quick-btn" data-pct="12.5">x8<small>12.5%</small></button>
+            <button class="quick-btn" data-pct="10">x10<small>10%</small></button>
+            <button class="quick-btn" data-pct="5">x20<small>5%</small></button>
+            <button class="quick-btn" data-pct="1">x100<small>1%</small></button>
+        </div>
+        <div class="percent-block">
+            <label>Твой шанс победы (1–75%)</label>
+            <div class="slider-wrap" id="sliderWrap"><div class="slider-track"><div class="slider-fill" id="sliderFill"></div></div><div class="slider-thumb" id="sliderThumb"></div><input type="range" id="percentSlider" min="1" max="75" value="50" step="0.5"></div>
+            <div class="percent-row"><input type="number" id="percentInput" min="1" max="75" value="50" step="0.5"><span>%</span></div>
+            <div class="multiplier-display">Множитель: <b id="multiplierDisplay2">x2.00</b></div>
+        </div>
+        <div class="controls">
+            <div class="bet-row"><input type="number" id="betAmount" value="100" min="1" placeholder="Ставка R$"><button class="allin" id="allInBtn">ALL</button></div>
+            <div class="spin-buttons"><button id="spinBtn">Крутить</button><button id="fastSpinBtn">⚡</button></div>
+        </div>
+        <div id="resultDisplay">Готов к игре</div>
+    </div>
+    <div class="tab-content" id="tab-chat">
+        <h2>ПОПОЛНЕНИЕ</h2>
+        <div class="request-block">
+            <h3>Заявка на пополнение</h3>
+            <div class="form-field"><label>Ник игрока</label><input type="text" id="nickInput" placeholder="Впиши ник" maxlength="20"></div>
+            <div class="form-field"><label>Сумма пополнения (R$)</label><input type="number" id="amountInput" value="100" min="1"></div>
+            <button class="btn-primary" id="sendRequestBtn">Отправить заявку</button>
+        </div>
+        <div id="playerChatWindow" style="display:none;"><div class="request-block"><h3>Чат с админом <span id="playerChatWith"></span></h3><div class="chat-log" id="playerChatLog"></div><div class="chat-input-row"><input type="text" id="playerMessageInput" placeholder="Сообщение..."><button id="playerSendBtn">➤</button></div></div></div>
+    </div>
+    <div class="tab-content" id="tab-withdraw">
+        <h2>ВЫВОД</h2>
+        <div class="request-block">
+            <h3>Заявка на вывод</h3>
+            <div class="form-field"><label>Твой ник</label><input type="text" id="withdrawNick" placeholder="Введи свой ник" maxlength="20"></div>
+            <div class="form-field"><label>Сумма вывода (R$)</label><input type="number" id="withdrawAmount" value="100" min="1"></div>
+            <button class="btn-primary" id="sendWithdrawBtn">Отправить заявку</button>
+        </div>
+        <div id="withdrawChatWindow" style="display:none;"><div class="request-block"><h3>Чат вывода <span id="withdrawChatWith"></span></h3><div class="chat-log" id="withdrawChatLog"></div><div class="chat-input-row"><input type="text" id="withdrawMessageInput" placeholder="Сообщение..."><button id="withdrawSendBtn">➤</button></div></div></div>
+    </div>
+    <div class="tab-content" id="tab-leaders">
+        <h2>🏆 ЛИДЕРЫ</h2>
+        <div id="leaderboardList"></div>
+    </div>
+    <div class="tab-content" id="tab-adminChats">
+        <h2>ЧАТЫ <span id="chatCount"></span></h2>
+        <div class="chat-layout">
+            <div class="chat-list" id="adminChatList"></div>
+            <div class="chat-main">
+                <div class="chat-main-header" id="adminChatHeader" style="display:none;"><span id="adminChatNick">—</span></div>
+                <div class="chat-empty" id="adminChatEmpty" style="display:none;">Выбери чат</div>
+                <div class="chat-log" id="adminChatLog" style="display:none;"></div>
+                <div id="adminActionBar" style="display:none;padding:10px;gap:8px;">
+                    <button class="btn-green" id="adminCreditBtn" style="flex:1;padding:10px;">💰 Начислить</button>
+                    <button class="btn-red" id="adminRejectBtn" style="flex:1;padding:10px;">✕ Отклонить</button>
+                </div>
+                <div class="chat-input-row" id="adminInputRow" style="display:none;"><input type="text" id="adminMessageInput" placeholder="Написать как админ..."><button id="adminSendBtn">➤</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const escapeHtml = t => { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
+let TOKEN = localStorage.getItem('bloxup_token');
+let socket = null;
+let currentUser = null;
+let balance = 0;
+let isSpinning = false, fastMode = false, pointerRotation = 0;
+let currentPlayerChatId = null, currentWithdrawChatId = null, activeAdminChatId = null;
+let chatsCache = {};
+let chatHistoryCache = {};
+let adminData = { users: [], settings: {} };
+let globalAbuse = false;
+let globalBanAll = false;
+
+async function api(path, data = null) {
+    const options = { headers: { 'Content-Type': 'application/json' } };
+    if (TOKEN) options.headers['Authorization'] = 'Bearer ' + TOKEN;
+    if (data) { options.method = 'POST'; options.body = JSON.stringify(data); }
+    const res = await fetch(path, options);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Ошибка');
+    return json;
+}
+
+function connectSocket() {
+    if (socket) socket.disconnect();
+    socket = io({ auth: { token: TOKEN }, transports: ['websocket', 'polling'] });
+    socket.on('connect', () => console.log('Socket connected'));
+    socket.on('errorMsg', (msg) => showToast(msg, 'error'));
+    socket.on('chatList', list => { chatsCache = {}; list.forEach(c => chatsCache[c.id] = c); if (currentUser && currentUser.role === 'admin') renderChatList(); });
+    socket.on('message', msg => {
+        if (msg.chat_id === currentPlayerChatId) { chatHistoryCache[msg.chat_id] = chatHistoryCache[msg.chat_id] || []; chatHistoryCache[msg.chat_id].push(msg); renderPlayerChat(); }
+        if (msg.chat_id === currentWithdrawChatId) { chatHistoryCache[msg.chat_id] = chatHistoryCache[msg.chat_id] || []; chatHistoryCache[msg.chat_id].push(msg); renderWithdrawChat(); }
+        if (msg.chat_id === activeAdminChatId) { chatHistoryCache[msg.chat_id] = chatHistoryCache[msg.chat_id] || []; chatHistoryCache[msg.chat_id].push(msg); renderAdminChat(); }
+        if (currentUser && currentUser.role === 'admin') updateBadge();
+    });
+    socket.on('history', ({ chatId, messages }) => { chatHistoryCache[chatId] = messages; if (chatId === currentPlayerChatId) renderPlayerChat(); if (chatId === currentWithdrawChatId) renderWithdrawChat(); if (chatId === activeAdminChatId) renderAdminChat(); });
+    socket.on('settingsUpdated', ({ key, value }) => { if (key === 'abuse_all_win') globalAbuse = value === 'true'; if (key === 'ban_all') globalBanAll = value === 'true'; });
+    socket.emit('getGameSettings', (settings) => { if (settings.abuse_all_win) globalAbuse = settings.abuse_all_win === 'true'; if (settings.ban_all) globalBanAll = settings.ban_all === 'true'; });
+}
+
+function showToast(text, type = 'info') {
+    const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = text; $('toastContainer').appendChild(t); setTimeout(() => t.remove(), 3000);
+}
+
+async function tryRestore() {
+    if (!TOKEN) return;
+    try { const me = await api('/api/me'); balance = me.balance; connectSocket(); loginUser(me.nick, me.role); } catch (e) { localStorage.removeItem('bloxup_token'); TOKEN = null; }
+}
+
+let authMode = 'login';
+document.querySelectorAll('.auth-tab').forEach(t => {
+    t.addEventListener('click', () => { document.querySelectorAll('.auth-tab').forEach(x => x.classList.remove('active')); t.classList.add('active'); authMode = t.dataset.auth; $('authBtn').textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться'; $('authError').textContent = ''; });
+});
+
+$('authBtn').addEventListener('click', async () => {
+    const nick = $('authNick').value.trim(); const password = $('authPassword').value;
+    if (!nick || !password) { $('authError').textContent = 'Заполни поля'; return; }
+    $('authBtn').disabled = true;
+    try {
+        const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+        const data = await api(endpoint, { nick, password });
+        TOKEN = data.token; localStorage.setItem('bloxup_token', TOKEN); balance = data.balance; connectSocket(); loginUser(data.nick, data.role);
+    } catch (e) { $('authError').textContent = e.message; } finally { $('authBtn').disabled = false; }
+});
+
+function loginUser(nick, role) {
+    currentUser = { nick, role };
+    $('authScreen').style.display = 'none'; $('mainApp').classList.add('show');
+    $('userNickDisplay').textContent = nick; $('balanceDisplay').textContent = balance;
+    $('userBadge').style.display = 'inline-block';
+    if (role === 'admin') { $('userBadge').textContent = 'АДМИН'; $('userBadge').className = 'user-badge badge-admin'; $('adminTab').classList.remove('hidden'); $('adminPanelBtn').style.display = 'inline-block'; }
+    else { $('userBadge').textContent = 'MEMBER'; $('userBadge').className = 'user-badge badge-member'; $('adminTab').classList.add('hidden'); $('adminPanelBtn').style.display = 'none'; }
+    updateWheel(); updateSliderVisual();
+}
+
+$('logoutBtn').addEventListener('click', () => { localStorage.removeItem('bloxup_token'); location.reload(); });
+
+// АДМИН ПАНЕЛЬ
+$('adminPanelBtn').addEventListener('click', () => {
+    if (currentUser.role !== 'admin') return;
+    socket.emit('getAdminData', (data) => {
+        adminData = data;
+        globalAbuse = data.settings.abuse_all_win === 'true';
+        globalBanAll = data.settings.ban_all === 'true';
+        const overlay = document.createElement('div'); overlay.className = 'admin-overlay';
+        overlay.innerHTML = `
+            <div class="admin-panel">
+                <div style="display:flex;justify-content:space-between;margin-bottom:16px;"><h2 style="margin:0;">⚙ Админ Панель</h2><button id="closeAdminPanel" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;">×</button></div>
+                <div class="admin-section"><h3>Настройки</h3>
+                    <div class="admin-toggle-row"><span>✅ Всё залетает (мне)</span><div class="admin-toggle ${data.settings.my_all_win==='true'?'on':''}" data-setting="my_all_win"></div></div>
+                    <div class="admin-toggle-row"><span>🚫 Всё не залетает (мне)</span><div class="admin-toggle ${data.settings.my_all_lose==='true'?'on':''}" data-setting="my_all_lose"></div></div>
+                    <div class="admin-toggle-row" style="border:1px solid var(--gold);"><span style="color:var(--gold);">🔥 Админ Абьюз</span><div class="admin-toggle ${globalAbuse?'on':''}" data-setting="abuse_all_win"></div></div>
+                    <div class="admin-toggle-row" style="border:1px solid var(--red);"><span style="color:var(--red);">⛔ Бан всех</span><div class="admin-toggle ${globalBanAll?'on':''}" data-setting="ban_all"></div></div>
+                </div>
+                <div class="admin-section"><h3>Баланс</h3>
+                    <div class="admin-row"><input type="text" id="adminTargetNick" placeholder="Ник"><input type="number" id="adminTargetAmount" placeholder="Сумма" style="flex:0.5;"></div>
+                    <div class="admin-row"><button class="btn-green" id="adminAddBalance" style="flex:1;padding:10px;">💰 Начислить</button><button class="btn-red" id="adminSubBalance" style="flex:1;padding:10px;">💸 Списать</button></div>
+                </div>
+                <div class="admin-section"><h3>Игроки</h3><div style="max-height:200px;overflow-y:auto;" id="adminUserList">${data.users.map(u => `<div class="user-list-item"><div><span>${escapeHtml(u.nick)}</span><small>(${u.balance} R$ ${u.is_banned ? '🚫' : ''})</small></div><div class="user-actions"><button class="btn-${u.is_banned ? 'green' : 'red'}" onclick="toggleAdminBan('${u.nick}', ${u.is_banned ? 0 : 1})">${u.is_banned ? '✅' : '⛔'}</button><button class="btn-blue" onclick="toggleLeaderboard('${u.nick}')">🏆</button></div></div>`).join('')}</div></div>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#closeAdminPanel').onclick = () => overlay.remove();
+        overlay.querySelectorAll('.admin-toggle').forEach(tgl => {
+            tgl.addEventListener('click', () => { const setting = tgl.dataset.setting; const newVal = !tgl.classList.contains('on'); socket.emit('adminUpdateSettings', { key: setting, value: newVal ? 'true' : 'false' }); tgl.classList.toggle('on', newVal); });
+        });
+        overlay.querySelector('#adminAddBalance').onclick = () => { const nick = overlay.querySelector('#adminTargetNick').value.trim(); const amount = parseInt(overlay.querySelector('#adminTargetAmount').value); if (nick && amount > 0) { socket.emit('adminCredit', { targetNick: nick, amount }); showToast(`Начислено ${amount} R$ игроку ${nick}`, 'success'); } };
+        overlay.querySelector('#adminSubBalance').onclick = () => { const nick = overlay.querySelector('#adminTargetNick').value.trim(); const amount = parseInt(overlay.querySelector('#adminTargetAmount').value); if (nick && amount > 0) { socket.emit('adminDebit', { targetNick: nick, amount }); showToast(`Списано ${amount} R$ у ${nick}`, 'warn'); } };
+    });
+});
+
+function toggleAdminBan(nick, ban) { socket.emit('adminBan', { targetNick: nick, ban: ban }); showToast(ban ? 'Забанен' : 'Разбанен', ban ? 'error' : 'success'); setTimeout(() => { document.querySelector('.admin-overlay')?.remove(); $('adminPanelBtn').click(); }, 500); }
+function toggleLeaderboard(nick) { socket.emit('adminRemoveLeaderboard', { targetNick: nick, remove: true }); showToast('Убран из лидеров', 'info'); setTimeout(() => { document.querySelector('.admin-overlay')?.remove(); $('adminPanelBtn').click(); }, 500); }
+
+// ИГРА
+function updateWheel() {
+    let pct = parseFloat($('percentInput').value);
+    if (isNaN(pct) || pct < 1) pct = 1;
+    if (pct > 75) pct = 75;
+    $('percentInput').value = pct; $('percentSlider').value = pct;
+    const winAngle = (pct / 100) * 360;
+    $('wheelSector').style.setProperty('--win-angle', winAngle + 'deg');
+    const mult = 100 / pct;
+    $('multiplierDisplay').textContent = 'x' + mult.toFixed(2); $('multiplierDisplay2').textContent = 'x' + mult.toFixed(2);
+    updateSliderVisual();
+    document.querySelectorAll('.quick-btn').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.pct) - pct) < 0.01));
+}
+function updateSliderVisual() {
+    const val = parseFloat($('percentSlider').value); const min = parseFloat($('percentSlider').min); const max = parseFloat($('percentSlider').max);
+    const pct = ((val - min) / (max - min)) * 100;
+    const wrap = $('sliderWrap'); if (!wrap || wrap.clientWidth === 0) return;
+    const trackW = wrap.clientWidth - 26; const px = (pct / 100) * trackW;
+    $('sliderFill').style.width = (13 + px) + 'px'; $('sliderThumb').style.left = (13 + px) + 'px';
+}
+window.addEventListener('resize', updateSliderVisual);
+$('percentSlider').addEventListener('input', () => { $('percentInput').value = $('percentSlider').value; updateWheel(); });
+$('percentInput').addEventListener('input', () => { if (!isSpinning) updateWheel(); });
+document.querySelectorAll('.quick-btn').forEach(b => b.addEventListener('click', () => { if (!isSpinning) { $('percentInput').value = b.dataset.pct; updateWheel(); } }));
+$('allInBtn').addEventListener('click', () => { if (!isSpinning) $('betAmount').value = balance; });
+
+$('spinBtn').addEventListener('click', () => {
+    if (isSpinning) return;
+    const bet = parseInt($('betAmount').value);
+    if (!bet || bet <= 0) return showToast('Введи ставку', 'error');
+    if (bet > balance) return showToast('Недостаточно баланса', 'error');
+    const pct = parseFloat($('percentInput').value); const mult = 100 / pct; const winAngle = (pct / 100) * 360;
+    let isWin;
+    if (currentUser.role === 'admin' && adminData.settings.my_all_win === 'true') isWin = true;
+    else if (currentUser.role === 'admin' && adminData.settings.my_all_lose === 'true') isWin = false;
+    else if (globalAbuse && currentUser.role !== 'admin') isWin = true;
+    else isWin = Math.random() < (pct / 1.5 / 100);
+    isSpinning = true; $('spinBtn').disabled = true; $('resultDisplay').textContent = 'Крутится...';
+    const duration = fastMode ? 800 : 4000;
+    const startTime = performance.now(); const startRotation = pointerRotation;
+    const targetAngle = isWin ? Math.random() * (winAngle - 10) : winAngle + 10 + Math.random() * (360 - winAngle - 20);
+    const delta = (targetAngle - (startRotation % 360) + 360) % 360; const totalRotation = 8 * 360 + delta;
+    function animate(now) {
+        const t = Math.min((now - startTime) / duration, 1); const eased = 1 - Math.pow(1 - t, 4);
+        $('pointerLine').style.transform = `rotate(${startRotation + totalRotation * eased}deg)`;
+        if (t < 1) return requestAnimationFrame(animate);
+        pointerRotation = (startRotation + totalRotation) % 360;
+        const actuallyWon = pointerRotation <= winAngle;
+        if (actuallyWon) { const win = Math.round(bet * mult); balance = balance - bet + win; $('resultDisplay').textContent = `✅ ПОБЕДА! +${win} R$`; $('resultDisplay').className = 'win'; }
+        else { balance -= bet; $('resultDisplay').textContent = `❌ ПРОИГРЫШ. -${bet} R$`; $('resultDisplay').className = 'lose'; }
+        $('balanceDisplay').textContent = balance;
+        if (currentUser.role !== 'admin') socket.emit('saveStats', { won: actuallyWon ? Math.round(bet * mult) : 0, lost: actuallyWon ? 0 : bet, spins: 1 });
+        socket.emit('updateBalance', { newBalance: balance });
+        isSpinning = false; $('spinBtn').disabled = false;
+    }
+    requestAnimationFrame(animate);
+});
+
+// ЧАТЫ
+const requestCounts = JSON.parse(localStorage.getItem('requestCounts')) || {};
+function checkSpam() {
+    const now = Date.now(); const key = currentUser.nick;
+    if (!requestCounts[key]) requestCounts[key] = { timestamps: [], blockedUntil: 0 };
+    const data = requestCounts[key];
+    if (data.blockedUntil > now) { showToast(`Подождите ${Math.ceil((data.blockedUntil - now) / 1000)} сек.`, 'error'); return false; }
+    data.timestamps = data.timestamps.filter(ts => now - ts < 300000);
+    if (data.timestamps.length >= 5) { data.blockedUntil = now + 300000; localStorage.setItem('requestCounts', JSON.stringify(requestCounts)); showToast('Слишком много заявок! Ждите 5 минут.', 'error'); return false; }
+    data.timestamps.push(now); localStorage.setItem('requestCounts', JSON.stringify(requestCounts)); return true;
+}
+
+$('sendRequestBtn').addEventListener('click', () => {
+    if (!checkSpam()) return;
+    const nick = $('nickInput').value.trim(); const amount = parseInt($('amountInput').value);
+    if (!nick || isNaN(amount) || amount <= 0) return showToast('Заполни ник и сумму', 'error');
+    if (!socket) return showToast('Нет соединения', 'error');
+    socket.emit('createChat', { amount, type: 'deposit', firstMessage: `Хочу пополнить ${amount} R$. Мой ник: ${nick}` }, ({ chatId }) => {
+        if (!chatId) return showToast('Ошибка на сервере', 'error');
+        currentPlayerChatId = chatId; $('playerChatWindow').style.display = 'block'; $('playerChatWith').textContent = nick; socket.emit('openChat', chatId); showToast('Заявка создана', 'success');
+    });
+});
+$('playerSendBtn').addEventListener('click', () => { const text = $('playerMessageInput').value.trim(); if (!text || !currentPlayerChatId) return; socket.emit('sendMessage', { chatId: currentPlayerChatId, text }); $('playerMessageInput').value = ''; });
+$('playerMessageInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('playerSendBtn').click(); });
+function renderPlayerChat() {
+    if (!currentPlayerChatId) return;
+    const msgs = chatHistoryCache[currentPlayerChatId] || [];
+    $('playerChatLog').innerHTML = msgs.map(m => `<div class="msg ${m.sender_role === 'player' ? 'player' : m.sender_role === 'admin' ? 'admin' : m.sender_role}">${m.sender_role === 'player' || m.sender_role === 'admin' ? `<strong>${escapeHtml(m.sender)}</strong><br>` : ''}${escapeHtml(m.text)}</div>`).join('');
+    $('playerChatLog').scrollTop = $('playerChatLog').scrollHeight;
+}
+
+$('sendWithdrawBtn').addEventListener('click', () => {
+    if (!checkSpam()) return;
+    const nick = $('withdrawNick').value.trim(); const amount = parseInt($('withdrawAmount').value);
+    if (!nick || amount <= 0) return showToast('Заполни ник и сумму', 'error');
+    if (amount > balance) return showToast('Недостаточно баланса', 'error');
+    if (!socket) return showToast('Нет соединения', 'error');
+    socket.emit('createChat', { amount, type: 'withdraw', firstMessage: `Хочу вывести ${amount} R$ на ник ${nick}` }, ({ chatId }) => {
+        currentWithdrawChatId = chatId; $('withdrawChatWindow').style.display = 'block'; $('withdrawChatWith').textContent = nick; socket.emit('openChat', chatId); showToast('Заявка создана', 'success');
+    });
+});
+$('withdrawSendBtn').addEventListener('click', () => { const text = $('withdrawMessageInput').value.trim(); if (!text || !currentWithdrawChatId) return; socket.emit('sendMessage', { chatId: currentWithdrawChatId, text }); $('withdrawMessageInput').value = ''; });
+function renderWithdrawChat() {
+    if (!currentWithdrawChatId) return;
+    const msgs = chatHistoryCache[currentWithdrawChatId] || [];
+    $('withdrawChatLog').innerHTML = msgs.map(m => `<div class="msg ${m.sender_role === 'player' ? 'player' : m.sender_role === 'admin' ? 'admin' : m.sender_role}">${m.sender_role === 'player' || m.sender_role === 'admin' ? `<strong>${escapeHtml(m.sender)}</strong><br>` : ''}${escapeHtml(m.text)}</div>`).join('');
+    $('withdrawChatLog').scrollTop = $('withdrawChatLog').scrollHeight;
+}
+
+function renderChatList() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    const ids = Object.keys(chatsCache); $('chatCount').textContent = '(' + ids.length + ')';
+    if (ids.length === 0) { $('adminChatList').innerHTML = '<p style="padding:8px;text-align:center;">Нет чатов</p>'; return; }
+    ids.sort((a, b) => chatsCache[b].updated_at - chatsCache[a].updated_at);
+    $('adminChatList').innerHTML = ids.map(id => { const c = chatsCache[id]; const statusMap = { pending: 'Ожидает', accepted: 'Начислено', rejected: 'Отклонена', paid: 'Оплачено' }; return `<div class="chat-list-item ${activeAdminChatId === id ? 'active' : ''}" onclick="openAdminChat('${id}')"><div class="nick">${escapeHtml(c.nick)}</div><div class="last">${c.type === 'deposit' ? '💳' : '💸'} ${c.amount} R$</div><div class="status-tag status-${c.status}" style="font-size:9px;">${statusMap[c.status]}</div></div>`; }).join('');
+}
+
+function openAdminChat(id) {
+    activeAdminChatId = id;
+    $('adminChatHeader').style.display = 'flex'; $('adminChatNick').textContent = chatsCache[id].nick;
+    $('adminChatEmpty').style.display = 'none'; $('adminChatLog').style.display = 'flex'; $('adminInputRow').style.display = 'flex';
+    if (chatsCache[id].status === 'pending') { $('adminActionBar').style.display = 'flex'; $('adminCreditBtn').textContent = '💰 Начислить ' + chatsCache[id].amount + ' R$'; } else { $('adminActionBar').style.display = 'none'; }
+    socket.emit('openChat', id); renderChatList();
+}
+
+function renderAdminChat() {
+    if (!activeAdminChatId) return;
+    const msgs = chatHistoryCache[activeAdminChatId] || [];
+    $('adminChatLog').innerHTML = msgs.map(m => `<div class="msg ${m.sender_role === 'player' ? 'player' : m.sender_role === 'admin' ? 'admin' : m.sender_role}">${m.sender_role === 'player' || m.sender_role === 'admin' ? `<strong>${escapeHtml(m.sender)}</strong><br>` : ''}${escapeHtml(m.text)}</div>`).join('');
+    $('adminChatLog').scrollTop = $('adminChatLog').scrollHeight;
+}
+
+$('adminSendBtn').addEventListener('click', () => { const text = $('adminMessageInput').value.trim(); if (!text || !activeAdminChatId) return; socket.emit('sendMessage', { chatId: activeAdminChatId, text }); $('adminMessageInput').value = ''; });
+$('adminCreditBtn').addEventListener('click', () => { if (!activeAdminChatId) return; const action = chatsCache[activeAdminChatId].type === 'withdraw' ? 'payout' : 'credit'; socket.emit('adminAction', { chatId: activeAdminChatId, action }); showToast('Выполнено', 'success'); });
+$('adminRejectBtn').addEventListener('click', () => { if (!activeAdminChatId) return; socket.emit('adminAction', { chatId: activeAdminChatId, action: 'reject' }); showToast('Отклонено', 'warn'); });
+
+function updateBadge() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    const totalUnread = Object.values(chatsCache).reduce((s, c) => s + (c.unread || 0), 0);
+    if (totalUnread > 0) { $('chatsBadge').textContent = totalUnread > 99 ? '99+' : totalUnread; $('chatsBadge').classList.add('show'); } else { $('chatsBadge').classList.remove('show'); }
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        if (tab.classList.contains('hidden')) return;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active'); $('tab-' + tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'leaders') loadLeaderboard();
+        if (tab.dataset.tab === 'adminChats' && currentUser && currentUser.role === 'admin') { Object.values(chatsCache).forEach(c => c.unread = 0); renderChatList(); updateBadge(); }
+    });
+});
+
+async function loadLeaderboard() {
+    try {
+        const r = await fetch('/api/leaderboard'); const list = await r.json();
+        if (!list.length) { $('leaderboardList').innerHTML = '<p style="text-align:center;padding:40px 20px">Пока пусто</p>'; return; }
+        $('leaderboardList').innerHTML = list.map((e, i) => { const rank = i + 1; const cls = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : ''; const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank; return `<div class="leader-row ${cls}"><div class="leader-rank">${medal}</div><div class="leader-info"><div class="leader-nick">${escapeHtml(e.nick)}</div><div class="leader-sub">${e.spins} прокруток</div></div><div class="leader-amount">${e.won}<small>R$</small></div></div>`; }).join('');
+    } catch (e) { console.error(e); }
+}
+
+tryRestore();
+</script>
+</body>
+</html>
