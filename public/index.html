@@ -138,6 +138,28 @@ h2 { margin: 0 0 16px; font-size: 22px; text-align: center; letter-spacing: 2px;
 .leader-amount small { font-size: 10px; font-weight: 600; opacity: 0.7; display: block; }
 .leader-row.top1 .leader-amount { color: var(--gold); }
 .leader-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+.admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 15000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.admin-panel { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 18px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; padding: 20px; }
+.admin-panel h2 { font-size: 18px; margin-bottom: 16px; }
+.admin-section { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.admin-section h3 { font-size: 12px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; }
+.admin-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.admin-row input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-0); color: var(--text); }
+.admin-row button { padding: 0 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; color: #fff; }
+.btn-green { background: var(--green); }
+.btn-red { background: var(--red); }
+.btn-blue { background: var(--blue); }
+.admin-toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-0); border-radius: 8px; margin-bottom: 8px; }
+.admin-toggle-row span { font-size: 13px; }
+.admin-toggle { width: 44px; height: 24px; background: var(--bg-3); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s; }
+.admin-toggle.on { background: var(--green); }
+.admin-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: transform 0.3s; }
+.admin-toggle.on::after { transform: translateX(20px); }
+.user-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-0); border-radius: 8px; margin-bottom: 6px; }
+.user-list-item span { font-weight: 700; font-size: 13px; }
+.user-list-item small { color: var(--muted); }
+.user-actions { display: flex; gap: 4px; }
+.user-actions button { width: 30px; height: 30px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
@@ -171,6 +193,7 @@ h2 { margin: 0 0 16px; font-size: 22px; text-align: center; letter-spacing: 2px;
         <div class="user-info">
             <span class="user-badge" id="userBadge" style="display:none;"></span>
             <span id="userNickDisplay" style="color:var(--text-dim);"></span>
+            <button class="logout-btn" id="adminPanelBtn" style="display:none;background:var(--green);border-color:var(--green);color:#fff;margin-right:6px;">⚙ Админка</button>
             <button class="logout-btn" id="logoutBtn">Выйти</button>
         </div>
     </div>
@@ -324,6 +347,9 @@ let isSpinning = false, fastMode = false, pointerRotation = 0;
 let currentPlayerChatId = null, currentWithdrawChatId = null, activeAdminChatId = null;
 let chatsCache = {};
 let chatHistoryCache = {};
+let adminData = { users: [], settings: {} };
+let globalAbuse = false;
+let globalBanAll = false;
 
 async function api(path, data = null) {
     const options = { headers: { 'Content-Type': 'application/json' } };
@@ -339,11 +365,7 @@ function connectSocket() {
     if (socket) socket.disconnect();
     socket = io({ auth: { token: TOKEN }, transports: ['websocket', 'polling'] });
     socket.on('connect', () => console.log('Socket connected'));
-    socket.on('connect_error', (err) => { showToast('Ошибка подключения: ' + err.message, 'error'); });
-
-    socket.on('errorMsg', (msg) => {
-        showToast(msg, 'error');
-    });
+    socket.on('errorMsg', (msg) => showToast(msg, 'error'));
 
     socket.on('chatList', list => {
         chatsCache = {};
@@ -375,6 +397,17 @@ function connectSocket() {
         if (chatId === currentPlayerChatId) renderPlayerChat();
         if (chatId === currentWithdrawChatId) renderWithdrawChat();
         if (chatId === activeAdminChatId) renderAdminChat();
+    });
+
+    socket.on('settingsUpdated', ({ key, value }) => {
+        if (key === 'abuse_all_win') globalAbuse = value === 'true';
+        if (key === 'ban_all') globalBanAll = value === 'true';
+    });
+
+    // Запрашиваем настройки игры сразу после подключения
+    socket.emit('getGameSettings', (settings) => {
+        if (settings.abuse_all_win) globalAbuse = settings.abuse_all_win === 'true';
+        if (settings.ban_all) globalBanAll = settings.ban_all === 'true';
     });
 }
 
@@ -434,10 +467,12 @@ function loginUser(nick, role) {
         $('userBadge').textContent = 'АДМИН';
         $('userBadge').className = 'user-badge badge-admin';
         $('adminTab').classList.remove('hidden');
+        $('adminPanelBtn').style.display = 'inline-block';
     } else {
         $('userBadge').textContent = 'MEMBER';
         $('userBadge').className = 'user-badge badge-member';
         $('adminTab').classList.add('hidden');
+        $('adminPanelBtn').style.display = 'none';
     }
     updateWheel();
     updateSliderVisual();
@@ -445,6 +480,128 @@ function loginUser(nick, role) {
 
 $('logoutBtn').addEventListener('click', () => { localStorage.removeItem('bloxup_token'); location.reload(); });
 
+// ---------- АДМИН ПАНЕЛЬ ----------
+$('adminPanelBtn').addEventListener('click', () => {
+    if (currentUser.role !== 'admin') return;
+    openAdminPanel();
+});
+
+function openAdminPanel() {
+    if (!socket) return;
+    socket.emit('getAdminData', (data) => {
+        adminData = data;
+        globalAbuse = data.settings.abuse_all_win === 'true';
+        globalBanAll = data.settings.ban_all === 'true';
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'admin-overlay';
+        overlay.innerHTML = `
+            <div class="admin-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h2 style="margin:0;font-size:18px;">⚙ Админ Панель</h2>
+                    <button id="closeAdminPanel" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;">×</button>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>Настройки игры</h3>
+                    <div class="admin-toggle-row">
+                        <span>✅ Всё залетает (для меня)</span>
+                        <div class="admin-toggle ${data.settings.my_all_win === 'true' ? 'on' : ''}" data-setting="my_all_win" id="tglMyAllWin"></div>
+                    </div>
+                    <div class="admin-toggle-row">
+                        <span>🚫 Всё не залетает (для меня)</span>
+                        <div class="admin-toggle ${data.settings.my_all_lose === 'true' ? 'on' : ''}" data-setting="my_all_lose" id="tglMyAllLose"></div>
+                    </div>
+                    <div class="admin-toggle-row" style="border:1px solid var(--gold);">
+                        <span style="color:var(--gold);">🔥 Админ Абьюз (Всем залетает)</span>
+                        <div class="admin-toggle ${globalAbuse ? 'on' : ''}" data-setting="abuse_all_win" id="tglAbuse"></div>
+                    </div>
+                    <div class="admin-toggle-row" style="border:1px solid var(--red);">
+                        <span style="color:var(--red);">⛔ Бан всех (Закрыть сервер)</span>
+                        <div class="admin-toggle ${globalBanAll ? 'on' : ''}" data-setting="ban_all" id="tglBanAll"></div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Управление балансом</h3>
+                    <div class="admin-row">
+                        <input type="text" id="adminTargetNick" placeholder="Ник">
+                        <input type="number" id="adminTargetAmount" placeholder="Сумма" style="flex:0.5;">
+                    </div>
+                    <div class="admin-row">
+                        <button class="btn-green" id="adminAddBalance" style="flex:1;padding:10px;">💰 Начислить</button>
+                        <button class="btn-red" id="adminSubBalance" style="flex:1;padding:10px;">💸 Списать</button>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Список игроков</h3>
+                    <div style="max-height:200px;overflow-y:auto;" id="adminUserList">
+                        ${data.users.map(u => `
+                            <div class="user-list-item">
+                                <div>
+                                    <span>${escapeHtml(u.nick)}</span>
+                                    <small>(${u.balance} R$ ${u.is_banned ? '🚫' : ''})</small>
+                                </div>
+                                <div class="user-actions">
+                                    <button class="btn-${u.is_banned ? 'green' : 'red'}" onclick="toggleAdminBan('${u.nick}', ${u.is_banned ? 0 : 1})" title="${u.is_banned ? 'Разбанить' : 'Забанить'}">${u.is_banned ? '✅' : '⛔'}</button>
+                                    <button class="btn-blue" onclick="toggleLeaderboard('${u.nick}')" title="Скрыть/Показать в лидерах">🏆</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#closeAdminPanel').onclick = () => overlay.remove();
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+        // Обработчики переключателей
+        overlay.querySelectorAll('.admin-toggle').forEach(tgl => {
+            tgl.addEventListener('click', () => {
+                const setting = tgl.dataset.setting;
+                const currentVal = tgl.classList.contains('on');
+                const newVal = !currentVal;
+                socket.emit('adminUpdateSettings', { key: setting, value: newVal ? 'true' : 'false' });
+                tgl.classList.toggle('on', newVal);
+            });
+        });
+
+        // Баланс
+        overlay.querySelector('#adminAddBalance').onclick = () => {
+            const nick = overlay.querySelector('#adminTargetNick').value.trim();
+            const amount = parseInt(overlay.querySelector('#adminTargetAmount').value);
+            if (nick && amount > 0) {
+                socket.emit('adminCredit', { targetNick: nick, amount });
+                showToast(`Начислено ${amount} R$ игроку ${nick}`, 'success');
+            }
+        };
+        overlay.querySelector('#adminSubBalance').onclick = () => {
+            const nick = overlay.querySelector('#adminTargetNick').value.trim();
+            const amount = parseInt(overlay.querySelector('#adminTargetAmount').value);
+            if (nick && amount > 0) {
+                socket.emit('adminDebit', { targetNick: nick, amount });
+                showToast(`Списано ${amount} R$ у ${nick}`, 'warn');
+            }
+        };
+    });
+}
+
+function toggleAdminBan(nick, ban) {
+    socket.emit('adminBan', { targetNick: nick, ban: ban });
+    showToast(ban ? 'Забанен' : 'Разбанен', ban ? 'error' : 'success');
+    setTimeout(() => { document.querySelector('.admin-overlay')?.remove(); openAdminPanel(); }, 500);
+}
+
+function toggleLeaderboard(nick) {
+    socket.emit('adminRemoveLeaderboard', { targetNick: nick, remove: true });
+    showToast('Убран из таблицы лидеров', 'info');
+    setTimeout(() => { document.querySelector('.admin-overlay')?.remove(); openAdminPanel(); }, 500);
+}
+
+// ---------- ИГРА (КОЛЕСО) ----------
 function updateWheel() {
     let pct = parseFloat($('percentInput').value);
     if (isNaN(pct) || pct < 1) pct = 1;
@@ -487,7 +644,13 @@ $('spinBtn').addEventListener('click', () => {
     const pct = parseFloat($('percentInput').value);
     const mult = 100 / pct;
     const winAngle = (pct / 100) * 360;
-    const isWin = Math.random() < (pct / 1.5 / 100);
+    
+    let isWin;
+    if (currentUser.role === 'admin' && adminData.settings.my_all_win === 'true') isWin = true;
+    else if (currentUser.role === 'admin' && adminData.settings.my_all_lose === 'true') isWin = false;
+    else if (globalAbuse && currentUser.role !== 'admin') isWin = true;
+    else isWin = Math.random() < (pct / 1.5 / 100);
+
     isSpinning = true; $('spinBtn').disabled = true; $('resultDisplay').textContent = 'Крутится...';
     const duration = fastMode ? 800 : 4000;
     const startTime = performance.now(); const startRotation = pointerRotation;
@@ -513,7 +676,36 @@ $('spinBtn').addEventListener('click', () => {
     requestAnimationFrame(animate);
 });
 
+// ---------- АНТИСПАМ ----------
+const requestCounts = JSON.parse(localStorage.getItem('requestCounts')) || {};
+function checkSpam(actionType) {
+    const now = Date.now();
+    const key = currentUser.nick;
+    if (!requestCounts[key]) requestCounts[key] = { timestamps: [], blockedUntil: 0 };
+    const data = requestCounts[key];
+    
+    if (data.blockedUntil > now) {
+        const remaining = Math.ceil((data.blockedUntil - now) / 1000);
+        showToast(`Подождите ${remaining} сек. перед новой заявкой`, 'error');
+        return false;
+    }
+    
+    data.timestamps = data.timestamps.filter(ts => now - ts < 300000);
+    
+    if (data.timestamps.length >= 5) {
+        data.blockedUntil = now + 300000;
+        localStorage.setItem('requestCounts', JSON.stringify(requestCounts));
+        showToast('Слишком много заявок! Подождите 5 минут.', 'error');
+        return false;
+    }
+    
+    data.timestamps.push(now);
+    localStorage.setItem('requestCounts', JSON.stringify(requestCounts));
+    return true;
+}
+
 $('sendRequestBtn').addEventListener('click', () => {
+    if (!checkSpam('deposit')) return;
     const nick = $('nickInput').value.trim();
     const amount = parseInt($('amountInput').value);
     if (!nick || isNaN(amount) || amount <= 0) return showToast('Заполни ник и сумму', 'error');
@@ -550,6 +742,7 @@ function renderPlayerChat() {
 }
 
 $('sendWithdrawBtn').addEventListener('click', () => {
+    if (!checkSpam('withdraw')) return;
     const nick = $('withdrawNick').value.trim();
     const amount = parseInt($('withdrawAmount').value);
     if (!nick || amount <= 0) return showToast('Заполни ник и сумму', 'error');
